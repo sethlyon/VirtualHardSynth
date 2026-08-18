@@ -1,0 +1,10 @@
+# Normalise to LF in the repo and on checkout. The systemd unit, udev rule and
+# Python all run on Linux; CRLF in those is a real source of confusion.
+* text=auto eol=lf
+
+*.bin binary
+*.elf binary
+*.sf2 binary
+*.sf3 binary
+*.wav binary
+*.pdf binary

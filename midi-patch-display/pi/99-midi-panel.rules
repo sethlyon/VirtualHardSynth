@@ -1,0 +1,18 @@
+# Stable device name for the CYD front panel.
+#
+# The CH340 exposes no unique serial number, so Linux hands out /dev/ttyUSB*
+# in plug order. Add a second USB-serial device (or replug in a different
+# order) and the bridge is suddenly talking to the wrong thing.
+#
+# Install:
+#   sudo cp 99-midi-panel.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# Then use --port /dev/midi-panel instead of /dev/ttyUSB0.
+#
+# If you ever run a second CH340 device on this Pi, disambiguate by adding the
+# physical port path, which you can find with:
+#   udevadm info -a -n /dev/ttyUSB0 | grep KERNELS
+# and then append e.g. KERNELS=="1-1.3" to the rule below.
+
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="midi-panel", MODE="0666"

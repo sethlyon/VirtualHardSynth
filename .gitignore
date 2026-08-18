@@ -1,0 +1,30 @@
+# PlatformIO
+.pio/
+.vscode/
+*.bin
+*.elf
+*.map
+
+# Firmware build config with device-specific values
+midi-patch-display/local.properties
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# SoundFonts are large binaries - keep them out of git
+*.sf2
+*.sf3
+*.sfz
+
+# Recordings / renders
+*.wav
+*.flac
+*.ogg
+
+# OS
+.DS_Store
+Thumbs.db
