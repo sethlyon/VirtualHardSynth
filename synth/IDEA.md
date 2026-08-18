@@ -36,30 +36,43 @@ Its limits:
 - Rebuildable from a clean SD card by running something, not by remembering
 - A control interface the panel bridge can drive
 
+**Decided 2026-08-18:**
+- One patch active at a time. No splits or layers. This is what removes the
+  need for a plugin host - see [ENGINES.md](ENGINES.md).
+
 **Nice to have:**
 - Multiple engines, not SoundFonts alone
-- Splits and layers
 - Effects, reverb at minimum
 - Set lists, patches walked in performance order
 - Recording
 - Low enough latency to feel like hardware
 
+## Decisions
+
+Taken 2026-08-18. Full reasoning in [ENGINES.md](ENGINES.md).
+
+- **Why rebuild:** all four drivers apply - reproducibility, boot and
+  reliability, sonic range, and performance features.
+- **One patch at a time.** No splits or layers.
+- **Engine architecture:** roll our own supervisor with resident JACK engines,
+  phased, starting from the FluidSynth we already have. Not a plugin host,
+  because one-patch-at-a-time makes its central feature dead weight.
+- **Reproducibility:** Ansible against stock Raspberry Pi OS Lite.
+- **Power-cut safety:** read-only root with overlayfs, patches on a small
+  writable partition.
+
 ## Open Questions
 
-These decide the whole design and are not yet answered:
-
-1. **Why rebuild?** Which failure hurts most: boot time, reliability,
-   reproducibility, patch management, or sonic range?
-2. **Engine direction.** Stay with FluidSynth for its simplicity, or move to a
-   host that can run several engines and plugins?
-3. **Multi-timbral?** One patch at a time, or splits and layers, which changes
-   the data model and the panel UI substantially.
-4. **Reproducibility mechanism.** A flashable image, Ansible against a stock
-   Raspberry Pi OS, or containers?
-5. **Latency target.** What buffer size does the HAT manage cleanly, and does
-   the kernel need `PREEMPT_RT`?
-6. **Is the Pi 4 staying?** A rebuild is the moment to reconsider compute, given
-   the whole thing runs on a battery.
+1. **What audio HAT is it?** Decides achievable buffer size and whether
+   `PREEMPT_RT` is needed at all.
+2. **Which battery module?** Needed for panel battery reporting and for knowing
+   whether clean shutdown on low battery is possible.
+3. **How much RAM is the Pi 4?** Decides how many engines can stay resident.
+4. **Which engines after sfizz?** setBfree and Dexed are the obvious character
+   additions, but that is taste, not architecture.
+5. **Where does the bridge live?** Stays a separate daemon, or folds into the
+   supervisor as its panel driver.
+6. **Is the Pi 4 staying?** A rebuild is the moment to reconsider compute.
 
 ## Viability Notes
 
