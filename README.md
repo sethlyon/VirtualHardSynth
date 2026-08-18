@@ -7,6 +7,10 @@ DAW, no boot sequence to babysit. A Raspberry Pi with an audio HAT does the
 sound, and a physical touchscreen panel does the front panel, the way a rack
 synth would.
 
+**Picking this up on a new machine? Start with [HANDOFF.md](HANDOFF.md)** - it
+carries verified hardware facts, what is and is not proven, resume commands, and
+the decisions already taken.
+
 ## Components
 
 | Directory | What it is | State |
