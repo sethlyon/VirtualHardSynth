@@ -245,6 +245,12 @@ def index():
     return render_template("index.html", curated=CURATED_SOUNDFONTS, synth_svg=svg)
 
 
+@app.route("/sf")
+def soundfonts_page():
+    """Phone-sized soundfont picker/loader - no control surface."""
+    return render_template("soundfonts.html", curated=CURATED_SOUNDFONTS)
+
+
 @app.route("/api/soundfonts", methods=["GET"])
 def get_soundfonts():
     data = load_data()
@@ -299,9 +305,18 @@ def add_soundfont():
     data.setdefault("soundfonts", {})[alias] = {"path": str(dest), "name": name}
 
     # The point of adding a soundfont is to play it, not to hand-map 100+
-    # programs first: load every preset as the active patch table (identity
-    # bank/prog mapping), auto-backing up whatever was active first so
-    # switching soundfonts is never destructive in practice.
+    # programs first.
+    backup_slug = make_active(data, alias, name, presets)
+    log.info("added soundfont %r (%s), %d presets, patch table replaced", alias, dest, len(presets))
+    return jsonify(alias=alias, name=name, path=str(dest), preset_count=len(presets),
+                   patch_table_replaced=True, backup_config=backup_slug)
+
+
+def make_active(data, alias, name, presets):
+    """Load every preset of one soundfont as the active patch table (identity
+    bank/prog mapping), auto-backing up whatever was active first so
+    switching soundfonts is never destructive in practice. Saves data and
+    returns the backup config's slug, if one was made."""
     backup_slug = None
     if data.get("patches"):
         backup_slug = save_config("before " + name, data)
@@ -309,11 +324,30 @@ def add_soundfont():
         {"bank": b, "prog": p, "soundfont": alias, "src_bank": b, "src_prog": p, "name": n}
         for b, p, n in presets
     ]
-
     save_data(data)
-    log.info("added soundfont %r (%s), %d presets, patch table replaced", alias, dest, len(presets))
-    return jsonify(alias=alias, name=name, path=str(dest), preset_count=len(presets),
-                   patch_table_replaced=True, backup_config=backup_slug)
+    return backup_slug
+
+
+@app.route("/api/soundfonts/<alias>/activate", methods=["POST"])
+def activate_soundfont(alias):
+    """Switch to a soundfont that's already downloaded - the same patch-table
+    swap adding one does, without fetching it again."""
+    data = load_data()
+    info = data.get("soundfonts", {}).get(alias)
+    if info is None:
+        return jsonify(error="no such soundfont"), 404
+    path = info["path"] if isinstance(info, dict) else info
+    name = (info.get("name") if isinstance(info, dict) else None) or alias
+    try:
+        presets = sf2.read_presets(path)
+    except Exception as e:
+        return jsonify(error="could not read %s: %s" % (path, e)), 400
+    if not presets:
+        return jsonify(error="no presets found in this soundfont"), 400
+    backup_slug = make_active(data, alias, name, presets)
+    log.info("activated soundfont %r, %d presets", alias, len(presets))
+    return jsonify(alias=alias, name=name, preset_count=len(presets),
+                   backup_config=backup_slug)
 
 
 @app.route("/api/soundfonts/<alias>", methods=["DELETE"])
