@@ -1,16 +1,15 @@
 #cloud-config
-# VHS-1 first boot. prepare-card.ps1 fills in the SSH key and writes this
-# to the card's boot partition.
+# VHS-1 first boot, copied to the card's boot partition by prepare-card.ps1.
+#
+# The user isn't created here: Raspberry Pi OS ships a placeholder first
+# user and renames it from userconf.txt (also written by prepare-card.ps1),
+# or else stops boot at an interactive "enter new username" dialog.
+# cloud-init's users module never runs on this image. firstboot.sh installs
+# the SSH key and sudo rule instead.
 hostname: vhs
 manage_etc_hosts: true
-users:
-  - name: vhs
-    groups: [users, adm, dialout, audio, netdev, video, plugdev, input, gpio, spi, i2c, render, sudo]
-    shell: /bin/bash
-    lock_passwd: true
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    ssh_authorized_keys:
-      - __SSH_KEY__
+keyboard:
+  layout: us
 ssh_pwauth: false
 enable_ssh: true
 runcmd:

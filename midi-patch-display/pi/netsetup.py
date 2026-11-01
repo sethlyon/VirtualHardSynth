@@ -87,6 +87,10 @@ def main():
     buf = b""
     last_state = last_refresh = 0.0
     log.info("panel on %s, online=%s", args.port, panel.online)
+    # Don't wait for the panel's hello: it stops sending them as soon as it
+    # sees a state frame, so one that arrived before we started is gone.
+    if not panel.online:
+        panel.prompt()
 
     while True:
         buf += port.read(0.5)

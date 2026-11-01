@@ -21,9 +21,9 @@ instead of a rebuild.
 
 | File | Runs | Does |
 |------|------|------|
-| `prepare-card.ps1` | on your PC | config.txt (WM8960, UART), cmdline.txt, cloud-init user-data, copies the repo |
-| `user-data` | cloud-init, first boot | user `vhs` + SSH key, hostname `vhs`, calls firstboot.sh |
-| `firstboot.sh` | first boot, offline | repo into `/home/vhs`, Wi-Fi country, starts the two units below |
+| `prepare-card.ps1` | on your PC | config.txt (WM8960, UART), cmdline.txt, userconf.txt + SSH key, cloud-init user-data, copies the repo |
+| `user-data` | cloud-init, first boot | hostname `vhs`, US keyboard, calls firstboot.sh |
+| `firstboot.sh` | first boot, offline | SSH key + sudo for `vhs`, repo into `/home/vhs`, Wi-Fi country, starts the two units below |
 | `vhs-netsetup.service` | until provisioned | `netsetup.py`: drives the panel, Wi-Fi picker (stdlib only) |
 | `vhs-provision.service` | once, when online | `provision.sh`: apt packages, WM8960 mixer, installs + starts the synth services |
 | `50-vhs-networkmanager.rules` | always | lets the bridge (user `vhs`) scan/join Wi-Fi for the panel later |

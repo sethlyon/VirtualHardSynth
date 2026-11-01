@@ -8,7 +8,8 @@ customisation, then point this at the card's boot partition. It:
 
   - sets up the audio HAT and the panel's GPIO UART in config.txt
   - takes the serial console off the UART in cmdline.txt
-  - writes cloud-init user-data: hostname vhs, user vhs, your SSH key
+  - writes userconf.txt (user vhs, locked password) and your SSH key
+  - writes cloud-init user-data: hostname vhs, US keyboard, firstboot hook
   - copies this repo (committed work only) to vhs/ on the card
 
 On first boot setup/firstboot.sh copies the repo into /home/vhs, the panel
@@ -75,10 +76,17 @@ $cmd = ([IO.File]::ReadAllText($cmdPath)).Trim() -split '\s+' |
     Where-Object { $_ -notmatch '^console=(serial0|ttyAMA0|ttyS0),' }
 Write-Lf $cmdPath (($cmd -join ' ') + "`n")
 
-# cloud-init
-$key = (Get-Content $SshKey -Raw).Trim()
-$ud = (Get-Content (Join-Path $PSScriptRoot 'user-data') -Raw).Replace('__SSH_KEY__', $key)
-Write-Lf (Join-Path $Boot 'user-data') $ud
+# cloud-init: hostname, keyboard, and the firstboot.sh hook
+Write-Lf (Join-Path $Boot 'user-data') (Get-Content (Join-Path $PSScriptRoot 'user-data') -Raw)
+
+# The user. Raspberry Pi OS renames its placeholder first user from this
+# file; without it, boot stops at an interactive "enter new username"
+# dialog. '*' is a locked password - log in with the SSH key.
+Write-Lf (Join-Path $Boot 'userconf.txt') "vhs:*`n"
+$vhsBoot = Join-Path $Boot 'vhs'
+[IO.Directory]::CreateDirectory($vhsBoot) | Out-Null
+Write-Lf (Join-Path $vhsBoot 'authorized_keys') ((Get-Content $SshKey -Raw).Trim() + "`n")
+
 $sshFlag = Join-Path $Boot 'ssh'
 if (-not (Test-Path -LiteralPath $sshFlag)) { [IO.File]::WriteAllText($sshFlag, '') }
 
