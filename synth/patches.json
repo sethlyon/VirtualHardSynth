@@ -1,0 +1,1522 @@
+{
+  "soundfonts": {
+    "gm": {
+      "path": "/usr/share/sounds/sf2/FluidR3_GM.sf2",
+      "name": "FluidR3 GM"
+    }
+  },
+  "patches": [
+    {
+      "bank": 0,
+      "prog": 0,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 0,
+      "name": "Yamaha Grand Piano"
+    },
+    {
+      "bank": 0,
+      "prog": 1,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 1,
+      "name": "Bright Yamaha Grand"
+    },
+    {
+      "bank": 0,
+      "prog": 2,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 2,
+      "name": "Electric Piano"
+    },
+    {
+      "bank": 0,
+      "prog": 3,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 3,
+      "name": "Honky Tonk"
+    },
+    {
+      "bank": 0,
+      "prog": 4,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 4,
+      "name": "Rhodes EP"
+    },
+    {
+      "bank": 0,
+      "prog": 5,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 5,
+      "name": "Legend EP 2"
+    },
+    {
+      "bank": 0,
+      "prog": 6,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 6,
+      "name": "Harpsichord"
+    },
+    {
+      "bank": 0,
+      "prog": 7,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 7,
+      "name": "Clavinet"
+    },
+    {
+      "bank": 0,
+      "prog": 8,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 8,
+      "name": "Celesta"
+    },
+    {
+      "bank": 0,
+      "prog": 9,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 9,
+      "name": "Glockenspiel"
+    },
+    {
+      "bank": 0,
+      "prog": 10,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 10,
+      "name": "Music Box"
+    },
+    {
+      "bank": 0,
+      "prog": 11,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 11,
+      "name": "Vibraphone"
+    },
+    {
+      "bank": 0,
+      "prog": 12,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 12,
+      "name": "Marimba"
+    },
+    {
+      "bank": 0,
+      "prog": 13,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 13,
+      "name": "Xylophone"
+    },
+    {
+      "bank": 0,
+      "prog": 14,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 14,
+      "name": "Tubular Bells"
+    },
+    {
+      "bank": 0,
+      "prog": 15,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 15,
+      "name": "Dulcimer"
+    },
+    {
+      "bank": 0,
+      "prog": 16,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 16,
+      "name": "DrawbarOrgan"
+    },
+    {
+      "bank": 0,
+      "prog": 17,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 17,
+      "name": "Percussive Organ"
+    },
+    {
+      "bank": 0,
+      "prog": 18,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 18,
+      "name": "Rock Organ"
+    },
+    {
+      "bank": 0,
+      "prog": 19,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 19,
+      "name": "Church Organ"
+    },
+    {
+      "bank": 0,
+      "prog": 20,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 20,
+      "name": "Reed Organ"
+    },
+    {
+      "bank": 0,
+      "prog": 21,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 21,
+      "name": "Accordian"
+    },
+    {
+      "bank": 0,
+      "prog": 22,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 22,
+      "name": "Harmonica"
+    },
+    {
+      "bank": 0,
+      "prog": 23,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 23,
+      "name": "Bandoneon"
+    },
+    {
+      "bank": 0,
+      "prog": 24,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 24,
+      "name": "Nylon String Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 25,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 25,
+      "name": "Steel String Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 26,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 26,
+      "name": "Jazz Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 27,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 27,
+      "name": "Clean Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 28,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 28,
+      "name": "Palm Muted Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 29,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 29,
+      "name": "Overdrive Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 30,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 30,
+      "name": "Distortion Guitar"
+    },
+    {
+      "bank": 0,
+      "prog": 31,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 31,
+      "name": "Guitar Harmonics"
+    },
+    {
+      "bank": 0,
+      "prog": 32,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 32,
+      "name": "Acoustic Bass"
+    },
+    {
+      "bank": 0,
+      "prog": 33,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 33,
+      "name": "Fingered Bass"
+    },
+    {
+      "bank": 0,
+      "prog": 34,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 34,
+      "name": "Picked Bass"
+    },
+    {
+      "bank": 0,
+      "prog": 35,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 35,
+      "name": "Fretless Bass"
+    },
+    {
+      "bank": 0,
+      "prog": 36,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 36,
+      "name": "Slap Bass"
+    },
+    {
+      "bank": 0,
+      "prog": 37,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 37,
+      "name": "Pop Bass"
+    },
+    {
+      "bank": 0,
+      "prog": 38,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 38,
+      "name": "Synth Bass 1"
+    },
+    {
+      "bank": 0,
+      "prog": 39,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 39,
+      "name": "Synth Bass 2"
+    },
+    {
+      "bank": 0,
+      "prog": 40,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 40,
+      "name": "Violin"
+    },
+    {
+      "bank": 0,
+      "prog": 41,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 41,
+      "name": "Viola"
+    },
+    {
+      "bank": 0,
+      "prog": 42,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 42,
+      "name": "Cello"
+    },
+    {
+      "bank": 0,
+      "prog": 43,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 43,
+      "name": "Contrabass"
+    },
+    {
+      "bank": 0,
+      "prog": 44,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 44,
+      "name": "Tremolo"
+    },
+    {
+      "bank": 0,
+      "prog": 45,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 45,
+      "name": "Pizzicato Section"
+    },
+    {
+      "bank": 0,
+      "prog": 46,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 46,
+      "name": "Harp"
+    },
+    {
+      "bank": 0,
+      "prog": 47,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 47,
+      "name": "Timpani"
+    },
+    {
+      "bank": 0,
+      "prog": 48,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 48,
+      "name": "Strings"
+    },
+    {
+      "bank": 0,
+      "prog": 49,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 49,
+      "name": "Slow Strings"
+    },
+    {
+      "bank": 0,
+      "prog": 50,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 50,
+      "name": "Synth Strings 1"
+    },
+    {
+      "bank": 0,
+      "prog": 51,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 51,
+      "name": "Synth Strings 2"
+    },
+    {
+      "bank": 0,
+      "prog": 52,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 52,
+      "name": "Ahh Choir"
+    },
+    {
+      "bank": 0,
+      "prog": 53,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 53,
+      "name": "Ohh Voices"
+    },
+    {
+      "bank": 0,
+      "prog": 54,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 54,
+      "name": "Synth Voice"
+    },
+    {
+      "bank": 0,
+      "prog": 55,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 55,
+      "name": "Orchestra Hit"
+    },
+    {
+      "bank": 0,
+      "prog": 56,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 56,
+      "name": "Trumpet"
+    },
+    {
+      "bank": 0,
+      "prog": 57,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 57,
+      "name": "Trombone"
+    },
+    {
+      "bank": 0,
+      "prog": 58,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 58,
+      "name": "Tuba"
+    },
+    {
+      "bank": 0,
+      "prog": 59,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 59,
+      "name": "Muted Trumpet"
+    },
+    {
+      "bank": 0,
+      "prog": 60,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 60,
+      "name": "French Horns"
+    },
+    {
+      "bank": 0,
+      "prog": 61,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 61,
+      "name": "Brass Section"
+    },
+    {
+      "bank": 0,
+      "prog": 62,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 62,
+      "name": "Synth Brass 1"
+    },
+    {
+      "bank": 0,
+      "prog": 63,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 63,
+      "name": "Synth Brass 2"
+    },
+    {
+      "bank": 0,
+      "prog": 64,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 64,
+      "name": "Soprano Sax"
+    },
+    {
+      "bank": 0,
+      "prog": 65,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 65,
+      "name": "Alto Sax"
+    },
+    {
+      "bank": 0,
+      "prog": 66,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 66,
+      "name": "Tenor Sax"
+    },
+    {
+      "bank": 0,
+      "prog": 67,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 67,
+      "name": "Baritone Sax"
+    },
+    {
+      "bank": 0,
+      "prog": 68,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 68,
+      "name": "Oboe"
+    },
+    {
+      "bank": 0,
+      "prog": 69,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 69,
+      "name": "English Horn"
+    },
+    {
+      "bank": 0,
+      "prog": 70,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 70,
+      "name": "Bassoon"
+    },
+    {
+      "bank": 0,
+      "prog": 71,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 71,
+      "name": "Clarinet"
+    },
+    {
+      "bank": 0,
+      "prog": 72,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 72,
+      "name": "Piccolo"
+    },
+    {
+      "bank": 0,
+      "prog": 73,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 73,
+      "name": "Flute"
+    },
+    {
+      "bank": 0,
+      "prog": 74,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 74,
+      "name": "Recorder"
+    },
+    {
+      "bank": 0,
+      "prog": 75,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 75,
+      "name": "Pan Flute"
+    },
+    {
+      "bank": 0,
+      "prog": 76,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 76,
+      "name": "Bottle Chiff"
+    },
+    {
+      "bank": 0,
+      "prog": 77,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 77,
+      "name": "Shakuhachi"
+    },
+    {
+      "bank": 0,
+      "prog": 78,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 78,
+      "name": "Whistle"
+    },
+    {
+      "bank": 0,
+      "prog": 79,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 79,
+      "name": "Ocarina"
+    },
+    {
+      "bank": 0,
+      "prog": 80,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 80,
+      "name": "Square Lead"
+    },
+    {
+      "bank": 0,
+      "prog": 81,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 81,
+      "name": "Saw Wave"
+    },
+    {
+      "bank": 0,
+      "prog": 82,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 82,
+      "name": "Calliope Lead"
+    },
+    {
+      "bank": 0,
+      "prog": 83,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 83,
+      "name": "Chiffer Lead"
+    },
+    {
+      "bank": 0,
+      "prog": 84,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 84,
+      "name": "Charang"
+    },
+    {
+      "bank": 0,
+      "prog": 85,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 85,
+      "name": "Solo Vox"
+    },
+    {
+      "bank": 0,
+      "prog": 86,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 86,
+      "name": "Fifth Sawtooth Wave"
+    },
+    {
+      "bank": 0,
+      "prog": 87,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 87,
+      "name": "Bass & Lead"
+    },
+    {
+      "bank": 0,
+      "prog": 88,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 88,
+      "name": "Fantasia"
+    },
+    {
+      "bank": 0,
+      "prog": 89,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 89,
+      "name": "Warm Pad"
+    },
+    {
+      "bank": 0,
+      "prog": 90,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 90,
+      "name": "Polysynth"
+    },
+    {
+      "bank": 0,
+      "prog": 91,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 91,
+      "name": "Space Voice"
+    },
+    {
+      "bank": 0,
+      "prog": 92,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 92,
+      "name": "Bowed Glass"
+    },
+    {
+      "bank": 0,
+      "prog": 93,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 93,
+      "name": "Metal Pad"
+    },
+    {
+      "bank": 0,
+      "prog": 94,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 94,
+      "name": "Halo Pad"
+    },
+    {
+      "bank": 0,
+      "prog": 95,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 95,
+      "name": "Sweep Pad"
+    },
+    {
+      "bank": 0,
+      "prog": 96,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 96,
+      "name": "Ice Rain"
+    },
+    {
+      "bank": 0,
+      "prog": 97,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 97,
+      "name": "Soundtrack"
+    },
+    {
+      "bank": 0,
+      "prog": 98,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 98,
+      "name": "Crystal"
+    },
+    {
+      "bank": 0,
+      "prog": 99,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 99,
+      "name": "Atmosphere"
+    },
+    {
+      "bank": 0,
+      "prog": 100,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 100,
+      "name": "Brightness"
+    },
+    {
+      "bank": 0,
+      "prog": 101,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 101,
+      "name": "Goblin"
+    },
+    {
+      "bank": 0,
+      "prog": 102,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 102,
+      "name": "Echo Drops"
+    },
+    {
+      "bank": 0,
+      "prog": 103,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 103,
+      "name": "Star Theme"
+    },
+    {
+      "bank": 0,
+      "prog": 104,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 104,
+      "name": "Sitar"
+    },
+    {
+      "bank": 0,
+      "prog": 105,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 105,
+      "name": "Banjo"
+    },
+    {
+      "bank": 0,
+      "prog": 106,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 106,
+      "name": "Shamisen"
+    },
+    {
+      "bank": 0,
+      "prog": 107,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 107,
+      "name": "Koto"
+    },
+    {
+      "bank": 0,
+      "prog": 108,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 108,
+      "name": "Kalimba"
+    },
+    {
+      "bank": 0,
+      "prog": 109,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 109,
+      "name": "BagPipe"
+    },
+    {
+      "bank": 0,
+      "prog": 110,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 110,
+      "name": "Fiddle"
+    },
+    {
+      "bank": 0,
+      "prog": 111,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 111,
+      "name": "Shenai"
+    },
+    {
+      "bank": 0,
+      "prog": 112,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 112,
+      "name": "Tinker Bell"
+    },
+    {
+      "bank": 0,
+      "prog": 113,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 113,
+      "name": "Agogo"
+    },
+    {
+      "bank": 0,
+      "prog": 114,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 114,
+      "name": "Steel Drums"
+    },
+    {
+      "bank": 0,
+      "prog": 115,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 115,
+      "name": "Woodblock"
+    },
+    {
+      "bank": 0,
+      "prog": 116,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 116,
+      "name": "Taiko Drum"
+    },
+    {
+      "bank": 0,
+      "prog": 117,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 117,
+      "name": "Melodic Tom"
+    },
+    {
+      "bank": 0,
+      "prog": 118,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 118,
+      "name": "Synth Drum"
+    },
+    {
+      "bank": 0,
+      "prog": 119,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 119,
+      "name": "Reverse Cymbal"
+    },
+    {
+      "bank": 0,
+      "prog": 120,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 120,
+      "name": "Fret Noise"
+    },
+    {
+      "bank": 0,
+      "prog": 121,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 121,
+      "name": "Breath Noise"
+    },
+    {
+      "bank": 0,
+      "prog": 122,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 122,
+      "name": "Sea Shore"
+    },
+    {
+      "bank": 0,
+      "prog": 123,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 123,
+      "name": "Bird Tweet"
+    },
+    {
+      "bank": 0,
+      "prog": 124,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 124,
+      "name": "Telephone"
+    },
+    {
+      "bank": 0,
+      "prog": 125,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 125,
+      "name": "Helicopter"
+    },
+    {
+      "bank": 0,
+      "prog": 126,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 126,
+      "name": "Applause"
+    },
+    {
+      "bank": 0,
+      "prog": 127,
+      "soundfont": "gm",
+      "src_bank": 0,
+      "src_prog": 127,
+      "name": "Gun Shot"
+    },
+    {
+      "bank": 8,
+      "prog": 4,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 4,
+      "name": "Detuned EP 1"
+    },
+    {
+      "bank": 8,
+      "prog": 5,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 5,
+      "name": "Detuned EP 2"
+    },
+    {
+      "bank": 8,
+      "prog": 6,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 6,
+      "name": "Coupled Harpsichord"
+    },
+    {
+      "bank": 8,
+      "prog": 14,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 14,
+      "name": "Church Bell"
+    },
+    {
+      "bank": 8,
+      "prog": 16,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 16,
+      "name": "Detuned Organ 1"
+    },
+    {
+      "bank": 8,
+      "prog": 17,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 17,
+      "name": "Detuned Organ 2"
+    },
+    {
+      "bank": 8,
+      "prog": 19,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 19,
+      "name": "Church Organ 2"
+    },
+    {
+      "bank": 8,
+      "prog": 21,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 21,
+      "name": "Italian Accordion"
+    },
+    {
+      "bank": 8,
+      "prog": 24,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 24,
+      "name": "Ukulele"
+    },
+    {
+      "bank": 8,
+      "prog": 25,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 25,
+      "name": "12 String Guitar"
+    },
+    {
+      "bank": 8,
+      "prog": 26,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 26,
+      "name": "Hawaiian Guitar"
+    },
+    {
+      "bank": 8,
+      "prog": 28,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 28,
+      "name": "Funk Guitar"
+    },
+    {
+      "bank": 8,
+      "prog": 30,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 30,
+      "name": "Feedback Guitar"
+    },
+    {
+      "bank": 8,
+      "prog": 31,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 31,
+      "name": "Guitar Feedback"
+    },
+    {
+      "bank": 8,
+      "prog": 38,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 38,
+      "name": "Synth Bass 3"
+    },
+    {
+      "bank": 8,
+      "prog": 39,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 39,
+      "name": "Synth Bass 4"
+    },
+    {
+      "bank": 8,
+      "prog": 40,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 40,
+      "name": "Slow Violin"
+    },
+    {
+      "bank": 8,
+      "prog": 48,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 48,
+      "name": "Orchestral Pad"
+    },
+    {
+      "bank": 8,
+      "prog": 50,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 50,
+      "name": "Synth Strings 3"
+    },
+    {
+      "bank": 8,
+      "prog": 61,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 61,
+      "name": "Brass 2"
+    },
+    {
+      "bank": 8,
+      "prog": 62,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 62,
+      "name": "Synth Brass 3"
+    },
+    {
+      "bank": 8,
+      "prog": 63,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 63,
+      "name": "Synth Brass 4"
+    },
+    {
+      "bank": 8,
+      "prog": 80,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 80,
+      "name": "Sine Wave"
+    },
+    {
+      "bank": 8,
+      "prog": 107,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 107,
+      "name": "Taisho Koto"
+    },
+    {
+      "bank": 8,
+      "prog": 115,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 115,
+      "name": "Castanets"
+    },
+    {
+      "bank": 8,
+      "prog": 116,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 116,
+      "name": "Concert Bass Drum"
+    },
+    {
+      "bank": 8,
+      "prog": 117,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 117,
+      "name": "Melo Tom 2"
+    },
+    {
+      "bank": 8,
+      "prog": 118,
+      "soundfont": "gm",
+      "src_bank": 8,
+      "src_prog": 118,
+      "name": "808 Tom"
+    },
+    {
+      "bank": 9,
+      "prog": 125,
+      "soundfont": "gm",
+      "src_bank": 9,
+      "src_prog": 125,
+      "name": "Burst Noise"
+    },
+    {
+      "bank": 16,
+      "prog": 25,
+      "soundfont": "gm",
+      "src_bank": 16,
+      "src_prog": 25,
+      "name": "Mandolin"
+    },
+    {
+      "bank": 128,
+      "prog": 0,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 0,
+      "name": "Standard"
+    },
+    {
+      "bank": 128,
+      "prog": 1,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 1,
+      "name": "Standard 1"
+    },
+    {
+      "bank": 128,
+      "prog": 2,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 2,
+      "name": "Standard 2"
+    },
+    {
+      "bank": 128,
+      "prog": 3,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 3,
+      "name": "Standard 3"
+    },
+    {
+      "bank": 128,
+      "prog": 4,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 4,
+      "name": "Standard 4"
+    },
+    {
+      "bank": 128,
+      "prog": 5,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 5,
+      "name": "Standard 5"
+    },
+    {
+      "bank": 128,
+      "prog": 6,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 6,
+      "name": "Standard 6"
+    },
+    {
+      "bank": 128,
+      "prog": 7,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 7,
+      "name": "Standard 7"
+    },
+    {
+      "bank": 128,
+      "prog": 8,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 8,
+      "name": "Room"
+    },
+    {
+      "bank": 128,
+      "prog": 9,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 9,
+      "name": "Room 1"
+    },
+    {
+      "bank": 128,
+      "prog": 10,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 10,
+      "name": "Room 2"
+    },
+    {
+      "bank": 128,
+      "prog": 11,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 11,
+      "name": "Room 3"
+    },
+    {
+      "bank": 128,
+      "prog": 12,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 12,
+      "name": "Room 4"
+    },
+    {
+      "bank": 128,
+      "prog": 13,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 13,
+      "name": "Room 5"
+    },
+    {
+      "bank": 128,
+      "prog": 14,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 14,
+      "name": "Room 6"
+    },
+    {
+      "bank": 128,
+      "prog": 15,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 15,
+      "name": "Room 7"
+    },
+    {
+      "bank": 128,
+      "prog": 16,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 16,
+      "name": "Power"
+    },
+    {
+      "bank": 128,
+      "prog": 17,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 17,
+      "name": "Power 1"
+    },
+    {
+      "bank": 128,
+      "prog": 18,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 18,
+      "name": "Power 2"
+    },
+    {
+      "bank": 128,
+      "prog": 19,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 19,
+      "name": "Power 3"
+    },
+    {
+      "bank": 128,
+      "prog": 24,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 24,
+      "name": "Electronic"
+    },
+    {
+      "bank": 128,
+      "prog": 25,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 25,
+      "name": "TR-808"
+    },
+    {
+      "bank": 128,
+      "prog": 32,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 32,
+      "name": "Jazz"
+    },
+    {
+      "bank": 128,
+      "prog": 33,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 33,
+      "name": "Jazz 1"
+    },
+    {
+      "bank": 128,
+      "prog": 34,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 34,
+      "name": "Jazz 2"
+    },
+    {
+      "bank": 128,
+      "prog": 35,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 35,
+      "name": "Jazz 3"
+    },
+    {
+      "bank": 128,
+      "prog": 36,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 36,
+      "name": "Jazz 4"
+    },
+    {
+      "bank": 128,
+      "prog": 40,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 40,
+      "name": "Brush"
+    },
+    {
+      "bank": 128,
+      "prog": 41,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 41,
+      "name": "Brush 1"
+    },
+    {
+      "bank": 128,
+      "prog": 42,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 42,
+      "name": "Brush 2"
+    },
+    {
+      "bank": 128,
+      "prog": 48,
+      "soundfont": "gm",
+      "src_bank": 128,
+      "src_prog": 48,
+      "name": "Orchestra Kit"
+    }
+  ]
+}

@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VirtualHardSynth — Control Surface</title>
+<style>
+  :root {
+    --bg: #05070a;
+    --panel: #12151c;
+    --panel-2: #191d27;
+    --line: #262b38;
+    --line-bright: #3a4257;
+    --text: #eef1f6;
+    --dim: #7d8496;
+    --cyan: #4fd1c5;
+    --magenta: #f153ee;
+    --warn: #f2b84b;
+    --bad: #e5484d;
+    --ok: #5fe37e;
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0; background:
+      radial-gradient(ellipse at top, #0c1018 0%, var(--bg) 55%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 3px);
+    color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  button, input, select { font: inherit; }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  /* ---------------- top bar ------------------------------------------- */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #0d1017, #090b10);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .led { width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
+    box-shadow: 0 0 8px 1px var(--ok); }
+  .brand h1 {
+    margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .brand h1 em { color: var(--cyan); font-style: normal; }
+  .topbar .actions { display: flex; gap: 8px; align-items: center; }
+  .status-strip { display: flex; gap: 14px; align-items: center; font-size: 11px; color: var(--dim); }
+  .status-strip .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; background: var(--line-bright); }
+  .status-strip .dot.on.audio { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+  .status-strip .dot.on.midi { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+  .status-strip .dot.on.api { background: var(--magenta); box-shadow: 0 0 6px var(--magenta); }
+  .status-strip .dot.off { background: var(--bad); }
+
+  button.ghost {
+    background: #12151c; color: var(--text); border: 1px solid var(--line-bright);
+    border-radius: 7px; padding: 8px 14px; font-weight: 700; cursor: pointer;
+    font-size: 12px; letter-spacing: .03em;
+  }
+  button.ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+  button.ghost.active {
+    border-color: var(--cyan); color: var(--cyan); background: #09242b;
+    box-shadow: 0 0 0 1px var(--cyan) inset;
+  }
+
+  /* ---------------- quantize drawer -------------------------------------- */
+  .quant-grid { display: grid; gap: 8px; }
+  .quant-opt {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    width: 100%; text-align: left; padding: 10px 12px; background: #0b0d12;
+    border-radius: 8px; border: 1px solid var(--line); border-left: 3px solid transparent;
+    color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .quant-opt:hover { border-color: var(--cyan); }
+  .quant-opt .label { display: flex; flex-direction: column; gap: 2px; }
+  .quant-opt .sub { color: var(--dim); font-weight: 400; font-size: 11px; }
+  .quant-opt .check { color: var(--cyan); font-weight: 700; visibility: hidden; }
+  .quant-opt.selected { border-left-color: var(--cyan); }
+  .quant-opt.selected .check { visibility: visible; }
+
+  /* ---------------- synth surface -------------------------------------- */
+  .surface-wrap {
+    max-width: 1640px; margin: 0 auto; padding: 22px 20px 8px;
+  }
+  #synth-svg-holder { width: 100%; }
+  #synth-svg-holder svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 40px rgba(0,0,0,.55)); }
+
+  .click { cursor: pointer; }
+  .click:focus-visible .hit, .key:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+  .active-glow .hit, .active-glow.key { filter: url(#cyanGlow) !important; }
+  .disabled { opacity: .3; cursor: not-allowed; }
+  .disabled .hit, .disabled.key { pointer-events: none; }
+  .toggled .hit { fill: #09242b !important; stroke: var(--cyan) !important; }
+  .toggled text { fill: var(--cyan) !important; }
+  .magenta-toggled .hit { fill: #1d0b1c !important; stroke: var(--magenta) !important; }
+  .magenta-toggled text { fill: var(--magenta) !important; }
+
+  .surface-hint {
+    text-align: center; color: var(--dim); font-size: 11px; letter-spacing: .06em;
+    margin: 2px 0 18px; text-transform: uppercase;
+  }
+
+  /* ---------------- soundfont drawer ------------------------------------ */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(2,3,5,.6); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 40;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(460px, 92vw);
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border-left: 1px solid var(--line-bright); z-index: 41;
+    transform: translateX(100%); transition: transform .25s cubic-bezier(.2,.9,.3,1);
+    overflow-y: auto; padding: 20px; box-shadow: -20px 0 60px -20px #000;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--dim); margin: 20px 0 10px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .drawer h2:first-of-type { margin-top: 4px; }
+  .drawer h2::before { content: ""; width: 14px; height: 2px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+  .drawer-head { display: flex; justify-content: space-between; align-items: center; }
+  .drawer-head strong { font-size: 15px; }
+
+  input, select {
+    background: #0b0d12; color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 7px 9px;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(79,209,197,.15);
+  }
+  button.solid {
+    background: linear-gradient(180deg, #6fe6da, var(--cyan));
+    color: #062421; border: none; font-weight: 700; cursor: pointer;
+    border-radius: 6px; padding: 7px 12px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 4px 10px -4px rgba(79,209,197,.6);
+  }
+  button.solid:hover { filter: brightness(1.06); }
+  button.secondary {
+    background: transparent; color: var(--dim); border: 1px solid var(--line-bright);
+    font-weight: 600; border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  }
+  button.secondary:hover { color: var(--text); border-color: var(--cyan); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row > * { flex: 0 0 auto; }
+  .grow { flex: 1 1 160px !important; }
+  .muted { color: var(--dim); }
+  .msg { font-size: 12px; margin-top: 8px; font-weight: 600; min-height: 1.4em; }
+  .msg.err { color: var(--bad); }
+  .msg.ok { color: var(--cyan); }
+
+  .sf-list { display: grid; gap: 10px; margin-bottom: 14px; }
+  .sf-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 10px 12px; background: #0b0d12; border-radius: 8px;
+    border: 1px solid var(--line); border-left: 3px solid #245450;
+  }
+  .sf-item .name { font-weight: 700; font-size: 13px; }
+  .sf-item .path { color: var(--dim); font-size: 10px; font-family: ui-monospace, Menlo, monospace; margin-top: 2px; word-break: break-all; }
+  .tag {
+    display: inline-block; padding: 2px 7px; border-radius: 20px;
+    background: #1c2230; color: var(--dim); font-size: 10px; margin-left: 6px;
+    border: 1px solid var(--line-bright);
+  }
+
+  /* ---------------- patch table ------------------------------------- */
+  main { max-width: 1640px; margin: 0 auto; padding: 8px 20px 60px; }
+  section.patch-section { margin-top: 26px; }
+  section.patch-section h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--dim); margin: 0 0 12px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  section.patch-section h2::before {
+    content: ""; width: 14px; height: 2px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan);
+  }
+  .panel {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 12px 28px -16px #000;
+  }
+  .filter { margin-bottom: 12px; width: 280px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--dim); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  tr:hover td { background: #ffffff08; }
+  tr.current-row td { background: rgba(79,209,197,.09); }
+  tr.current-row td:first-child { box-shadow: 2px 0 0 var(--cyan) inset; }
+  .editor-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--dim); margin: 22px 0 10px; font-weight: 700;
+    border-top: 1px dashed var(--line); padding-top: 16px;
+  }
+
+  @media (max-width: 720px) {
+    table thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tr {
+      border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+      margin-bottom: 8px; background: #0b0d12;
+    }
+    tr.current-row { border-color: var(--cyan); }
+    td { border: none; padding: 3px 0; }
+    td[data-label]::before {
+      content: attr(data-label); display: inline-block; width: 84px;
+      color: var(--dim); font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="led"></span><h1>VirtualHard<em>Synth</em></h1></div>
+  <div class="status-strip">
+    <span><span class="dot" id="led-audio"></span>AUDIO</span>
+    <span><span class="dot" id="led-midi"></span>MIDI</span>
+    <span><span class="dot" id="led-api"></span>API</span>
+  </div>
+  <div class="actions">
+    <button class="ghost" id="btn-metro" aria-pressed="false">Metronome</button>
+    <button class="ghost" id="btn-quantize" aria-haspopup="dialog">Quantize: Off</button>
+    <button class="ghost" id="btn-help" aria-haspopup="dialog">Help</button>
+    <button class="ghost" id="btn-patchlist">Patch list</button>
+    <button class="ghost" id="btn-soundfonts">Soundfonts</button>
+  </div>
+</div>
+
+<div class="surface-wrap">
+  <div id="synth-svg-holder">{{ synth_svg|safe }}</div>
+  <p class="surface-hint">Click/tap keys to play &middot; drag the encoder or bank/program arrows to navigate &middot; SHIFT + encoder = bank</p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer-soundfonts" role="dialog" aria-label="Soundfont manager">
+  <div class="drawer-head">
+    <strong>Soundfonts</strong>
+    <button class="secondary" id="drawer-close" aria-label="Close">✕</button>
+  </div>
+
+  <h2>Loaded</h2>
+  <div id="sf-list" class="sf-list"><p class="muted">Loading…</p></div>
+
+  <h2>Add a soundfont</h2>
+  <p class="muted" style="font-size:12px;margin:0 0 10px">
+    Adding a soundfont loads <em>all</em> of its presets as the active patch
+    table (bank/program numbers match the source file) &mdash; whatever was
+    active gets auto-saved below first, so switching is never destructive.
+  </p>
+  <div class="row" style="margin-bottom:8px">
+    <select id="curated-select" class="grow">
+      <option value="">Pick a known soundfont…</option>
+      {% for c in curated %}
+      <option value="{{ c.url }}" data-name="{{ c.name }}" data-key="{{ c.key }}">
+        {{ c.name }} ({{ c.size }})
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <p class="muted" style="font-size:12px;margin:0 0 8px">…or paste any direct .sf2 URL:</p>
+  <div class="row">
+    <input id="sf-alias" class="grow" placeholder="short id, e.g. 'general_user'">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input id="sf-name" class="grow" placeholder="display name">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input id="sf-url" class="grow" placeholder="https://…/soundfont.sf2">
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="solid" id="sf-add">Download &amp; add</button>
+  </div>
+  <div id="sf-msg" class="msg"></div>
+
+  <h2>Saved configurations</h2>
+  <p class="muted" style="font-size:12px;margin:0 0 10px">
+    A configuration is the whole patch table + which soundfonts it uses.
+    Save one per soundfont setup, then switch between them instantly.
+  </p>
+  <div id="cfg-list" class="sf-list"><p class="muted">Loading…</p></div>
+  <div class="row">
+    <input id="cfg-name" class="grow" placeholder="name this configuration…">
+    <button class="solid" id="cfg-save">Save current</button>
+  </div>
+  <div id="cfg-msg" class="msg"></div>
+</aside>
+
+<aside class="drawer" id="drawer-help" role="dialog" aria-label="Control surface help">
+  <div class="drawer-head">
+    <strong>Control surface guide</strong>
+    <button class="secondary" id="help-close" aria-label="Close">✕</button>
+  </div>
+  <h2>Real, live controls</h2>
+  <p class="muted" style="font-size:13px">
+    Keys, bank/program arrows, the encoder, patch pads, volume (knob A), pitch/mod wheels,
+    HOLD (sustain), LATCH, octave/transpose, and PANIC all really talk to the running
+    FluidSynth instance and <code>patchbridge.py</code> &mdash; anything you do here shows
+    up on the physical CYD panel too, since both drive the exact same backend state. The
+    Metronome and Quantize controls in the top bar drive the same looper that lives on the
+    CYD's loop screen. The RECORD/PLAY/STOP transport on the surface below is a separate,
+    local audition recorder for quickly hearing back a phrase you just played - it doesn't
+    touch the looper or persist anywhere.
+  </p>
+  <h2>Intentionally disabled</h2>
+  <p class="muted" style="font-size:13px">
+    Knobs B/C/D (reverb/chorus/filter), ARP, CHORD, and SCALE are dimmed because the
+    current engine doesn't expose those parameters or behaviors yet &mdash; hover any
+    dimmed control for why. Nothing here fakes sound it isn't actually making.
+  </p>
+</aside>
+
+<aside class="drawer" id="drawer-quantize" role="dialog" aria-label="Loop quantization">
+  <div class="drawer-head">
+    <strong>Loop quantization</strong>
+    <button class="secondary" id="quantize-close" aria-label="Close">✕</button>
+  </div>
+  <p class="muted" style="font-size:13px">
+    Snaps recorded and overdubbed notes to a rhythmic grid at the metronome's tempo, and
+    rounds the base loop's length up to the nearest bar so it cycles cleanly on the beat.
+    Applies going forward only &mdash; anything already recorded stays as played.
+  </p>
+  <div class="quant-grid" id="quant-options"></div>
+</aside>
+
+<main>
+  <section class="patch-section">
+    <h2>Patch table <span class="muted" id="patch-count"></span></h2>
+    <div class="panel">
+      <input id="filter" class="filter" placeholder="filter by name, bank, or program…">
+      <table>
+        <thead>
+          <tr><th>Bank</th><th>Prog</th><th>Name</th><th>Soundfont</th><th>Source</th><th></th></tr>
+        </thead>
+        <tbody id="patch-rows"></tbody>
+      </table>
+
+      <div class="editor-title">Add / edit a slot</div>
+      <div class="row">
+        <input id="p-bank" type="number" min="0" placeholder="bank" style="width:80px">
+        <input id="p-prog" type="number" min="0" placeholder="prog" style="width:80px">
+        <input id="p-name" class="grow" placeholder="display name">
+        <select id="p-soundfont"></select>
+        <select id="p-preset" class="grow"></select>
+        <button class="solid" id="p-save">Save slot</button>
+      </div>
+      <div id="p-msg" class="msg"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* =========================================================================
+   State
+   ========================================================================= */
+let soundfonts = {};
+let patches = [];
+let synthState = {
+  bank: 0, prog: 0, name: '', soundfont: '', vol: 0, midi: false, index: 0, count: 0,
+  metro_on: false, quantize: 'off',
+};
+const QUANTIZE_GRIDS = [
+  { key: 'off',   label: 'Off',              sub: 'Raw human timing' },
+  { key: '1/4',   label: '1/4 note',         sub: 'Quarter-note grid' },
+  { key: '1/8',   label: '1/8 note',         sub: 'Eighth-note grid' },
+  { key: '1/16',  label: '1/16 note',        sub: 'Sixteenth-note grid' },
+  { key: '1/32',  label: '1/32 note',        sub: 'Thirty-second-note grid' },
+  { key: '1/8t',  label: '1/8 triplet',      sub: 'Three per beat' },
+  { key: '1/16t', label: '1/16 triplet',     sub: 'Six per beat' },
+];
+let patchPage = 0;
+let octaveShift = 0;
+let transposeShift = 0;
+let latchMode = false;
+const latchedNotes = new Set();
+let shiftHeld = false;
+let sustainOn = false;
+const heldPointers = new Map(); // pointerId -> midi note, so we always release the right one
+
+/* =========================================================================
+   API helpers
+   ========================================================================= */
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.error) throw new Error(body.error || res.statusText);
+  return body;
+}
+const postJSON = (path, obj) => api(path, {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj),
+});
+
+function applyState(s) {
+  synthState = s;
+  const svg = document.getElementById('synth-svg-holder');
+  const setText = (id, t) => { const el = svg.querySelector('#' + id); if (el) el.textContent = t; };
+  setText('display-bank', 'BANK ' + String(s.bank).padStart(3, '0'));
+  setText('display-program', 'PROGRAM ' + String(s.prog).padStart(3, '0'));
+  setText('display-patch-name', (s.name || '-').toUpperCase());
+  setText('display-soundfont', (s.soundfont || '') + ' • ' + s.bank + ':' + s.prog);
+  renderPatchPads();
+  highlightCurrentRow();
+
+  const metroBtn = document.getElementById('btn-metro');
+  metroBtn.classList.toggle('active', !!s.metro_on);
+  metroBtn.setAttribute('aria-pressed', String(!!s.metro_on));
+
+  const grid = QUANTIZE_GRIDS.find((g) => g.key === s.quantize) || QUANTIZE_GRIDS[0];
+  document.getElementById('btn-quantize').textContent = 'Quantize: ' + grid.label;
+  document.querySelectorAll('#quant-options .quant-opt').forEach((el) => {
+    el.classList.toggle('selected', el.dataset.key === s.quantize);
+  });
+}
+
+function renderQuantizeOptions() {
+  const holder = document.getElementById('quant-options');
+  holder.innerHTML = '';
+  QUANTIZE_GRIDS.forEach((g) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quant-opt' + (g.key === synthState.quantize ? ' selected' : '');
+    btn.dataset.key = g.key;
+    btn.innerHTML = '<span class="label">' + g.label +
+      '<span class="sub">' + g.sub + '</span></span><span class="check">✓</span>';
+    btn.addEventListener('click', () => sendControl('quantize_set', { grid: g.key }));
+    holder.appendChild(btn);
+  });
+}
+
+async function sendControl(action, extra) {
+  try {
+    const s = await postJSON('/api/control', Object.assign({ action }, extra || {}));
+    applyState(s);
+    setLED('api', true);
+  } catch (e) {
+    setLED('api', false);
+  }
+}
+
+async function refreshState() {
+  try {
+    const s = await api('/api/state');
+    applyState(s);
+    setLED('api', true);
+  } catch (e) {
+    setLED('api', false);
+  }
+}
+
+/* =========================================================================
+   Accessible-activation helper: click + Enter/Space, for SVG <g> controls
+   ========================================================================= */
+function bindActivate(el, handler) {
+  if (!el) return;
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('role', 'button');
+  el.addEventListener('click', handler);
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(e); }
+  });
+}
+
+function disableControl(id, reason) {
+  const svg = document.getElementById('synth-svg-holder');
+  const el = svg.querySelector('#' + id);
+  if (!el) return;
+  el.classList.add('disabled');
+  el.removeAttribute('tabindex');
+  const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+  title.textContent = reason;
+  el.appendChild(title);
+  el.setAttribute('aria-disabled', 'true');
+  el.setAttribute('aria-label', reason);
+}
+
+function setToggled(id, on, magenta) {
+  const svg = document.getElementById('synth-svg-holder');
+  const el = svg.querySelector('#' + id);
+  if (!el) return;
+  el.classList.toggle(magenta ? 'magenta-toggled' : 'toggled', on);
+  el.setAttribute('aria-pressed', String(on));
+}
+
+function setLED(which, on) {
+  const el = document.getElementById('led-' + which);
+  if (!el) return;
+  el.classList.toggle('on', !!on);
+  el.classList.toggle(which, !!on);
+  el.classList.toggle('off', !on);
+}
+
+/* =========================================================================
+   Notes - the 49-key strip + pads all funnel through here
+   ========================================================================= */
+function effectiveMidi(base) {
+  return Math.max(0, Math.min(127, base + octaveShift + transposeShift));
+}
+
+async function noteOn(midi, velocity) {
+  try { await postJSON('/api/note', { midi, on: true, velocity: velocity || 100 }); setLED('audio', true); }
+  catch (e) { setLED('audio', false); }
+}
+async function noteOff(midi) {
+  try { await postJSON('/api/note', { midi, on: false }); }
+  catch (e) { /* best-effort; do not block on a release */ }
+}
+
+function lightKey(baseMidi, on) {
+  const svg = document.getElementById('synth-svg-holder');
+  const el = svg.querySelector('#key-' + baseMidi);
+  if (el) el.classList.toggle('active-glow', on);
+}
+
+function bindKeys() {
+  const svg = document.getElementById('synth-svg-holder');
+  svg.querySelectorAll('.key').forEach((el) => {
+    const base = Number(el.dataset.midi);
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', 'Play note ' + base);
+
+    const press = (e) => {
+      e.preventDefault();
+      const note = effectiveMidi(base);
+      lightKey(base, true);
+      if (latchMode) {
+        if (latchedNotes.has(note)) { latchedNotes.delete(note); noteOff(note); lightKey(base, false); }
+        else { latchedNotes.add(note); noteOn(note); }
+        return;
+      }
+      if (e.pointerId !== undefined) heldPointers.set(e.pointerId, note);
+      noteOn(note, 100);
+    };
+    const release = (e) => {
+      if (latchMode) return; // latched notes only release on next press
+      const note = e.pointerId !== undefined ? heldPointers.get(e.pointerId) : effectiveMidi(base);
+      if (note === undefined) return;
+      heldPointers.delete(e.pointerId);
+      lightKey(base, false);
+      noteOff(note);
+    };
+
+    el.addEventListener('pointerdown', press);
+    el.addEventListener('pointerup', release);
+    el.addEventListener('pointercancel', release);
+    el.addEventListener('pointerleave', (e) => { if (e.buttons === 0) release(e); });
+    el.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) press(e);
+    });
+    el.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') release(e);
+    });
+  });
+}
+
+/* All-notes-off safety: page hidden/unload, or the LATCH toggle turning off. */
+function allNotesOff() {
+  latchedNotes.forEach((n) => noteOff(n));
+  latchedNotes.clear();
+  heldPointers.forEach((n) => noteOff(n));
+  heldPointers.clear();
+  document.querySelectorAll('.key.active-glow').forEach((el) => el.classList.remove('active-glow'));
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) allNotesOff(); });
+window.addEventListener('pagehide', allNotesOff);
+
+/* =========================================================================
+   Bank / program / encoder / display
+   ========================================================================= */
+function bindBankProgram() {
+  const svg = document.getElementById('synth-svg-holder');
+  bindActivate(svg.querySelector('#bank-prev'), () => sendControl('bank_prev'));
+  bindActivate(svg.querySelector('#bank-next'), () => sendControl('bank_next'));
+  bindActivate(svg.querySelector('#program-prev'), () => sendControl('patch_prev'));
+  bindActivate(svg.querySelector('#program-next'), () => sendControl('patch_next'));
+}
+
+function bindEncoder() {
+  const svg = document.getElementById('synth-svg-holder');
+  const el = svg.querySelector('#main-encoder');
+  if (!el) return;
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', 'Encoder: turn to change program, shift+turn for bank, push to jump to patch in table');
+
+  let dragging = false, lastY = 0, accum = 0;
+  el.addEventListener('pointerdown', (e) => { dragging = true; lastY = e.clientY; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    accum += lastY - e.clientY;
+    lastY = e.clientY;
+    const STEP = 14;
+    while (Math.abs(accum) >= STEP) {
+      const dir = accum > 0 ? 1 : -1;
+      sendControl(shiftHeld ? (dir > 0 ? 'bank_next' : 'bank_prev') : (dir > 0 ? 'patch_next' : 'patch_prev'));
+      accum -= dir * STEP;
+    }
+  });
+  const end = (e) => { dragging = false; try { el.releasePointerCapture(e.pointerId); } catch (_) {} };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const dir = e.deltaY > 0 ? -1 : 1;
+    sendControl(shiftHeld ? (dir > 0 ? 'bank_next' : 'bank_prev') : (dir > 0 ? 'patch_next' : 'patch_prev'));
+  }, { passive: false });
+  const push = () => {
+    const row = document.querySelector('#patch-rows tr.current-row');
+    if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.querySelector('button')?.focus(); }
+  };
+  el.addEventListener('click', push);
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); push(); } });
+}
+
+/* =========================================================================
+   Patch Select 1-8 (paged) - driven by the real patch list, no hard-coding
+   ========================================================================= */
+function sortedPatches() {
+  return [...patches].sort((a, b) => a.bank - b.bank || a.prog - b.prog);
+}
+function currentPage() {
+  const all = sortedPatches();
+  const pages = Math.max(1, Math.ceil(all.length / 8));
+  patchPage = ((patchPage % pages) + pages) % pages;
+  return all.slice(patchPage * 8, patchPage * 8 + 8);
+}
+function renderPatchPads() {
+  const svg = document.getElementById('synth-svg-holder');
+  const page = currentPage();
+  for (let i = 0; i < 8; i++) {
+    const g = svg.querySelector('#patch-' + (i + 1));
+    if (!g) continue;
+    const txt = g.querySelector('text');
+    const entry = page[i];
+    g.dataset.bank = entry ? entry.bank : '';
+    g.dataset.prog = entry ? entry.prog : '';
+    if (txt) txt.textContent = entry ? (entry.bank + ':' + entry.prog) : '–';
+    g.classList.toggle('disabled', !entry);
+    g.classList.toggle('toggled', !!entry && entry.bank === synthState.bank && entry.prog === synthState.prog);
+    g.setAttribute('aria-label', entry ? ('Select patch ' + entry.name) : 'Empty slot');
+  }
+}
+function bindPatchPads() {
+  const svg = document.getElementById('synth-svg-holder');
+  for (let i = 1; i <= 8; i++) {
+    bindActivate(svg.querySelector('#patch-' + i), (e) => {
+      const g = e.currentTarget;
+      if (g.dataset.bank === '') return;
+      sendControl('patch_select', { bank: Number(g.dataset.bank), prog: Number(g.dataset.prog) });
+    });
+  }
+  bindActivate(svg.querySelector('#patch-pagePrev'), () => { patchPage--; renderPatchPads(); });
+  bindActivate(svg.querySelector('#patch-pageNext'), () => { patchPage++; renderPatchPads(); });
+  bindActivate(svg.querySelector('#patch-page'), () => { patchPage++; renderPatchPads(); });
+}
+
+/* =========================================================================
+   Knobs - A is real (master volume), B/C/D are honestly disabled
+   ========================================================================= */
+function bindDragKnob(el, onChange, opts) {
+  if (!el) return;
+  const range = opts.max - opts.min;
+  let dragging = false, lastY = 0, value = opts.initial ?? opts.min;
+  const commit = (v) => { value = Math.max(opts.min, Math.min(opts.max, v)); onChange(value); };
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('role', 'slider');
+  el.setAttribute('aria-valuemin', opts.min);
+  el.setAttribute('aria-valuemax', opts.max);
+  el.addEventListener('pointerdown', (e) => { dragging = true; lastY = e.clientY; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const delta = (lastY - e.clientY) * (range / 140);
+    lastY = e.clientY;
+    commit(value + delta);
+  });
+  const end = (e) => { dragging = false; try { el.releasePointerCapture(e.pointerId); } catch (_) {} };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', (e) => { e.preventDefault(); commit(value + (e.deltaY > 0 ? -1 : 1) * range * 0.03); }, { passive: false });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); commit(value + range * 0.03); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); commit(value - range * 0.03); }
+  });
+  return { set: (v) => { value = v; el.setAttribute('aria-valuenow', Math.round(v)); } };
+}
+
+function bindKnobs() {
+  const svg = document.getElementById('synth-svg-holder');
+  let volTimer = null;
+  bindDragKnob(svg.querySelector('#knob-a'), (v) => {
+    clearTimeout(volTimer);
+    volTimer = setTimeout(() => sendControl('volume_set', { value: Math.round(v) }), 60);
+  }, { min: 0, max: 100, initial: synthState.vol });
+
+  disableControl('knob-b', 'Reverb is not exposed by the current FluidSynth setup yet.');
+  disableControl('knob-c', 'Chorus is not exposed by the current FluidSynth setup yet.');
+  disableControl('knob-d', 'Filter/brightness is not exposed by the current FluidSynth setup yet.');
+}
+
+/* =========================================================================
+   Pitch + mod wheels - both real
+   ========================================================================= */
+function bindWheel(el, opts) {
+  if (!el) return;
+  let dragging = false, lastY = 0, value = opts.center;
+  const send = (v) => opts.onChange(Math.round(v));
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('role', 'slider');
+  el.addEventListener('pointerdown', (e) => { dragging = true; lastY = e.clientY; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const delta = (lastY - e.clientY) * ((opts.max - opts.min) / 200);
+    lastY = e.clientY;
+    value = Math.max(opts.min, Math.min(opts.max, value + delta));
+    send(value);
+  });
+  const end = (e) => {
+    dragging = false;
+    try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+    if (opts.springBack) { value = opts.center; send(value); }
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+
+function bindWheels() {
+  const svg = document.getElementById('synth-svg-holder');
+  bindWheel(svg.querySelector('#pitch-wheel'), {
+    min: 0, max: 16383, center: 8192, springBack: true,
+    onChange: (v) => postJSON('/api/pitch', { value: v }).catch(() => {}),
+  });
+  bindWheel(svg.querySelector('#mod-wheel'), {
+    min: 0, max: 127, center: 0, springBack: false,
+    onChange: (v) => postJSON('/api/cc', { controller: 1, value: v }).catch(() => {}),
+  });
+}
+
+/* =========================================================================
+   Pads 1-8 - audition shortcuts: a short triad around middle C, transposed
+   per pad, using the current patch. Real audio, not a stored sequence.
+   ========================================================================= */
+const PAD_CHORDS = [
+  [60, 64, 67], [62, 65, 69], [64, 67, 71], [65, 69, 72],
+  [67, 71, 74], [69, 72, 76], [71, 74, 77], [72, 76, 79],
+];
+function bindPads() {
+  const svg = document.getElementById('synth-svg-holder');
+  for (let i = 1; i <= 8; i++) {
+    const el = svg.querySelector('#pad-' + i);
+    if (!el) continue;
+    el.setAttribute('aria-label', 'Audition pad ' + i + ': plays a short chord on the current patch');
+    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    title.textContent = 'Audition shortcut - plays a short chord on the current patch';
+    el.appendChild(title);
+    bindActivate(el, () => {
+      const notes = PAD_CHORDS[i - 1];
+      notes.forEach((n) => noteOn(n, 96));
+      el.classList.add('active-glow');
+      setTimeout(() => { notes.forEach((n) => noteOff(n)); el.classList.remove('active-glow'); }, 550);
+    });
+  }
+}
+
+/* =========================================================================
+   Performance: HOLD (real sustain), LATCH (real), OCT/TRANSPOSE (real),
+   ARP/CHORD/SCALE (honestly disabled)
+   ========================================================================= */
+function bindPerf() {
+  const svg = document.getElementById('synth-svg-holder');
+
+  bindActivate(svg.querySelector('#perf-hold'), () => {
+    sustainOn = !sustainOn;
+    postJSON('/api/cc', { controller: 64, value: sustainOn ? 127 : 0 }).catch(() => {});
+    setToggled('perf-hold', sustainOn);
+  });
+
+  bindActivate(svg.querySelector('#perf-latch'), () => {
+    latchMode = !latchMode;
+    setToggled('perf-latch', latchMode, true);
+    if (!latchMode) allNotesOff();
+  });
+
+  bindActivate(svg.querySelector('#perf-octDown'), () => {
+    octaveShift = Math.max(-36, octaveShift - 12);
+    flashValue('perf-octDown', String(octaveShift / 12));
+  });
+  bindActivate(svg.querySelector('#perf-octUp'), () => {
+    octaveShift = Math.min(36, octaveShift + 12);
+    flashValue('perf-octUp', String(octaveShift / 12));
+  });
+
+  const transposeSteps = [0, 1, 2, 3, 4, 5, 6, -5, -4, -3, -2, -1];
+  let tIdx = 0;
+  bindActivate(svg.querySelector('#perf-transpose'), () => {
+    tIdx = (tIdx + 1) % transposeSteps.length;
+    transposeShift = transposeSteps[tIdx];
+    setToggled('perf-transpose', transposeShift !== 0);
+    flashValue('perf-transpose', (transposeShift > 0 ? '+' : '') + transposeShift);
+  });
+
+  disableControl('perf-arp', 'Arpeggiator is not implemented yet.');
+  disableControl('perf-chord', 'Chord mode is not implemented yet.');
+  disableControl('perf-scale', 'Scale quantization is not implemented yet.');
+}
+
+function flashValue(id, text) {
+  const svg = document.getElementById('synth-svg-holder');
+  const el = svg.querySelector('#' + id);
+  const txt = el && el.querySelector('text');
+  if (!txt) return;
+  const original = txt.textContent;
+  txt.textContent = text;
+  setTimeout(() => { txt.textContent = original; }, 900);
+}
+
+/* =========================================================================
+   Transport: RECORD/PLAY/STOP is a local audition-phrase recorder (no
+   server contract change). PREV/REW have no meaningful mapping here.
+   ========================================================================= */
+let recording = null;      // { startedAt, events: [{t, midi, on, velocity}] }
+let recordedPhrase = null;
+let playbackTimers = [];
+let isRecording = false, isPlaying = false;
+
+function wrapNoteFns() {
+  const origOn = noteOn, origOff = noteOff;
+  noteOn = async (midi, velocity) => {
+    if (isRecording) recording.events.push({ t: performance.now() - recording.startedAt, midi, on: true, velocity });
+    return origOn(midi, velocity);
+  };
+  noteOff = async (midi) => {
+    if (isRecording) recording.events.push({ t: performance.now() - recording.startedAt, midi, on: false });
+    return origOff(midi);
+  };
+}
+
+function stopPlayback() {
+  playbackTimers.forEach(clearTimeout);
+  playbackTimers = [];
+  isPlaying = false;
+  setToggled('transport-play', false);
+}
+
+function bindTransport() {
+  const svg = document.getElementById('synth-svg-holder');
+  wrapNoteFns();
+
+  bindActivate(svg.querySelector('#transport-record'), () => {
+    if (isRecording) {
+      isRecording = false;
+      recordedPhrase = recording;
+      setToggled('transport-record', false);
+    } else {
+      stopPlayback();
+      recording = { startedAt: performance.now(), events: [] };
+      isRecording = true;
+      setToggled('transport-record', true, true);
+    }
+  });
+
+  bindActivate(svg.querySelector('#transport-play'), () => {
+    if (!recordedPhrase || !recordedPhrase.events.length || isPlaying) return;
+    isPlaying = true;
+    setToggled('transport-play', true);
+    recordedPhrase.events.forEach((ev) => {
+      const timer = setTimeout(() => { (ev.on ? noteOn : noteOff)(ev.midi, ev.velocity); }, ev.t);
+      playbackTimers.push(timer);
+    });
+    const last = recordedPhrase.events[recordedPhrase.events.length - 1];
+    playbackTimers.push(setTimeout(stopPlayback, last.t + 50));
+  });
+
+  bindActivate(svg.querySelector('#transport-stop'), () => { stopPlayback(); allNotesOff(); });
+
+  disableControl('transport-prev', 'No sequencer/song position exists to jump to.');
+  disableControl('transport-rew', 'No sequencer/song position exists to rewind.');
+
+  const title = (id, text) => {
+    const el = svg.querySelector('#' + id);
+    if (!el) return;
+    el.setAttribute('aria-label', text);
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    t.textContent = text;
+    el.appendChild(t);
+  };
+  title('transport-record', 'Record an audition phrase - captures the notes you play next');
+  title('transport-play', 'Play back the last recorded phrase');
+  title('transport-stop', 'Stop playback and silence all notes');
+}
+
+/* =========================================================================
+   Global row: SHIFT (encoder modifier), SETUP (opens soundfont drawer),
+   PANIC (real, existing panic action)
+   ========================================================================= */
+function bindGlobal() {
+  const svg = document.getElementById('synth-svg-holder');
+  bindActivate(svg.querySelector('#global-shift'), () => {
+    shiftHeld = !shiftHeld;
+    setToggled('global-shift', shiftHeld, true);
+  });
+  bindActivate(svg.querySelector('#global-setup'), () => openDrawer('drawer-soundfonts'));
+  bindActivate(svg.querySelector('#global-panic'), () => { sendControl('panic'); allNotesOff(); });
+}
+
+/* =========================================================================
+   Drawers
+   ========================================================================= */
+function openDrawer(id) {
+  document.getElementById(id).classList.add('open');
+  document.getElementById('scrim').classList.add('open');
+}
+function closeDrawers() {
+  document.querySelectorAll('.drawer').forEach((d) => d.classList.remove('open'));
+  document.getElementById('scrim').classList.remove('open');
+}
+document.getElementById('scrim').addEventListener('click', closeDrawers);
+document.getElementById('drawer-close').addEventListener('click', closeDrawers);
+document.getElementById('help-close').addEventListener('click', closeDrawers);
+document.getElementById('quantize-close').addEventListener('click', closeDrawers);
+document.getElementById('btn-soundfonts').addEventListener('click', () => openDrawer('drawer-soundfonts'));
+document.getElementById('btn-help').addEventListener('click', () => openDrawer('drawer-help'));
+document.getElementById('btn-quantize').addEventListener('click', () => openDrawer('drawer-quantize'));
+document.getElementById('btn-metro').addEventListener('click', () => sendControl('metronome_toggle'));
+document.getElementById('btn-patchlist').addEventListener('click', () => {
+  document.querySelector('.patch-section').scrollIntoView({ behavior: 'smooth' });
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawers(); });
+
+/* =========================================================================
+   Soundfont management (drawer contents) - same behavior as before
+   ========================================================================= */
+function renderSoundfonts() {
+  const el = document.getElementById('sf-list');
+  const aliases = Object.keys(soundfonts);
+  if (!aliases.length) { el.innerHTML = '<p class="muted">None loaded yet.</p>'; return; }
+  el.innerHTML = aliases.map(a => {
+    const sf = soundfonts[a];
+    return `<div class="sf-item">
+      <div>
+        <span class="name">${sf.name}</span>
+        <span class="tag">${a}</span>
+        <span class="tag">${sf.presets.length} presets</span>
+        <div class="path">${sf.path}</div>
+      </div>
+      <button class="secondary" data-del-sf="${a}">Remove</button>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-del-sf]').forEach(btn => {
+    btn.onclick = async () => {
+      const alias = btn.dataset.delSf;
+      const used = patches.filter(p => p.soundfont === alias).length;
+      const warning = used
+        ? `This will also delete the ${used} patch slot${used === 1 ? '' : 's'} that use it. Continue?`
+        : 'Remove this soundfont?';
+      if (!confirm(warning)) return;
+      try {
+        await api('/api/soundfonts/' + encodeURIComponent(alias), { method: 'DELETE' });
+        await loadAll();
+        await refreshState();
+      } catch (e) { alert(e.message); }
+    };
+  });
+  const sel = document.getElementById('p-soundfont');
+  sel.innerHTML = aliases.map(a => `<option value="${a}">${soundfonts[a].name}</option>`).join('');
+  sel.onchange();
+}
+
+function renderPresetOptions() {
+  const alias = document.getElementById('p-soundfont').value;
+  const sel = document.getElementById('p-preset');
+  const sf = soundfonts[alias];
+  if (!sf) { sel.innerHTML = ''; return; }
+  sel.innerHTML = sf.presets.map(p =>
+    `<option value="${p.bank},${p.prog}" data-name="${p.name}">${p.bank}:${p.prog} — ${p.name}</option>`
+  ).join('');
+}
+document.getElementById('p-soundfont').onchange = renderPresetOptions;
+document.getElementById('p-preset').onchange = () => {
+  const opt = document.getElementById('p-preset').selectedOptions[0];
+  if (opt && !document.getElementById('p-name').value) document.getElementById('p-name').value = opt.dataset.name;
+};
+
+document.getElementById('curated-select').onchange = (e) => {
+  const opt = e.target.selectedOptions[0];
+  if (!opt.value) return;
+  document.getElementById('sf-url').value = opt.value;
+  document.getElementById('sf-name').value = opt.dataset.name;
+  if (!document.getElementById('sf-alias').value) document.getElementById('sf-alias').value = opt.dataset.key;
+};
+
+document.getElementById('sf-add').onclick = async () => {
+  const alias = document.getElementById('sf-alias').value.trim();
+  const name = document.getElementById('sf-name').value.trim();
+  const url = document.getElementById('sf-url').value.trim();
+  const msg = document.getElementById('sf-msg');
+  msg.textContent = 'Downloading… this can take a while for larger files.';
+  msg.className = 'msg';
+  try {
+    const res = await postJSON('/api/soundfonts', { alias, name, url });
+    msg.textContent = `Added ${res.preset_count} presets as the active patch table` +
+      (res.backup_config ? ' (previous setup saved automatically).' : '.');
+    msg.className = 'msg ok';
+    document.getElementById('sf-alias').value = '';
+    document.getElementById('sf-name').value = '';
+    document.getElementById('sf-url').value = '';
+    await loadAll();
+    await refreshState();
+  } catch (e) {
+    msg.textContent = e.message; msg.className = 'msg err';
+  }
+};
+
+/* =========================================================================
+   Saved configurations
+   ========================================================================= */
+async function renderConfigs() {
+  const el = document.getElementById('cfg-list');
+  let configs;
+  try { configs = await api('/api/configs'); }
+  catch (e) { el.innerHTML = `<p class="muted">Could not load: ${e.message}</p>`; return; }
+  if (!configs.length) { el.innerHTML = '<p class="muted">No saved configurations yet.</p>'; return; }
+  el.innerHTML = configs.map(c => `<div class="sf-item">
+      <div>
+        <span class="name">${c.name}</span>
+        <span class="tag">${c.patch_count} patches</span>
+        <div class="path">${c.soundfonts.join(', ')}</div>
+      </div>
+      <div class="row">
+        <button class="secondary" data-load-cfg="${c.slug}">Load</button>
+        <button class="secondary" data-del-cfg="${c.slug}">Delete</button>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('[data-load-cfg]').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm('Replace the active patch table with this configuration?')) return;
+      try {
+        await api('/api/configs/' + encodeURIComponent(btn.dataset.loadCfg) + '/load', { method: 'POST' });
+        await loadAll();
+        await refreshState();
+      } catch (e) { alert(e.message); }
+    };
+  });
+  el.querySelectorAll('[data-del-cfg]').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm('Delete this saved configuration?')) return;
+      try {
+        await api('/api/configs/' + encodeURIComponent(btn.dataset.delCfg), { method: 'DELETE' });
+        await renderConfigs();
+      } catch (e) { alert(e.message); }
+    };
+  });
+}
+
+document.getElementById('cfg-save').onclick = async () => {
+  const name = document.getElementById('cfg-name').value.trim();
+  const msg = document.getElementById('cfg-msg');
+  if (!name) { msg.textContent = 'Give it a name first.'; msg.className = 'msg err'; return; }
+  try {
+    await postJSON('/api/configs', { name });
+    msg.textContent = 'Saved.'; msg.className = 'msg ok';
+    document.getElementById('cfg-name').value = '';
+    await renderConfigs();
+  } catch (e) {
+    msg.textContent = e.message; msg.className = 'msg err';
+  }
+};
+
+/* =========================================================================
+   Patch table
+   ========================================================================= */
+function highlightCurrentRow() {
+  document.querySelectorAll('#patch-rows tr').forEach(tr => {
+    tr.classList.toggle('current-row',
+      Number(tr.dataset.bank) === synthState.bank && Number(tr.dataset.prog) === synthState.prog);
+  });
+}
+
+function renderPatches() {
+  const filter = document.getElementById('filter').value.toLowerCase();
+  const rows = sortedPatches().filter(p => !filter ||
+    p.name.toLowerCase().includes(filter) || String(p.bank).includes(filter) || String(p.prog).includes(filter));
+  document.getElementById('patch-count').textContent = `(${patches.length})`;
+  document.getElementById('patch-rows').innerHTML = rows.map(p => {
+    const sf = soundfonts[p.soundfont];
+    return `<tr data-bank="${p.bank}" data-prog="${p.prog}">
+      <td class="mono" data-label="Bank">${String(p.bank).padStart(3,'0')}</td>
+      <td class="mono" data-label="Prog">${String(p.prog).padStart(3,'0')}</td>
+      <td data-label="Name">${p.name}</td>
+      <td data-label="Soundfont">${sf ? sf.name : p.soundfont}</td>
+      <td class="muted mono" data-label="Source">${p.src_bank}:${p.src_prog}</td>
+      <td data-label="">
+        <button class="secondary" data-select="${p.bank},${p.prog}">Play</button>
+        <button class="secondary" data-edit="${p.bank},${p.prog}">Edit</button>
+        <button class="secondary" data-del="${p.bank},${p.prog}">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+  highlightCurrentRow();
+
+  document.getElementById('patch-rows').querySelectorAll('[data-select]').forEach(btn => {
+    btn.onclick = () => {
+      const [bank, prog] = btn.dataset.select.split(',').map(Number);
+      sendControl('patch_select', { bank, prog });
+    };
+  });
+  document.getElementById('patch-rows').querySelectorAll('[data-edit]').forEach(btn => {
+    btn.onclick = () => {
+      const [bank, prog] = btn.dataset.edit.split(',').map(Number);
+      const p = patches.find(x => x.bank === bank && x.prog === prog);
+      document.getElementById('p-bank').value = p.bank;
+      document.getElementById('p-prog').value = p.prog;
+      document.getElementById('p-name').value = p.name;
+      document.getElementById('p-soundfont').value = p.soundfont;
+      renderPresetOptions();
+      document.getElementById('p-preset').value = `${p.src_bank},${p.src_prog}`;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    };
+  });
+  document.getElementById('patch-rows').querySelectorAll('[data-del]').forEach(btn => {
+    btn.onclick = async () => {
+      const [bank, prog] = btn.dataset.del.split(',').map(Number);
+      if (!confirm(`Delete slot ${bank}:${prog}?`)) return;
+      await api(`/api/patches/${bank}/${prog}`, { method: 'DELETE' });
+      await loadAll();
+    };
+  });
+}
+document.getElementById('filter').oninput = renderPatches;
+
+document.getElementById('p-save').onclick = async () => {
+  const msg = document.getElementById('p-msg');
+  const [src_bank, src_prog] = (document.getElementById('p-preset').value || '0,0').split(',').map(Number);
+  try {
+    await postJSON('/api/patches', {
+      bank: Number(document.getElementById('p-bank').value),
+      prog: Number(document.getElementById('p-prog').value),
+      name: document.getElementById('p-name').value,
+      soundfont: document.getElementById('p-soundfont').value,
+      src_bank, src_prog,
+    });
+    msg.textContent = 'Saved.'; msg.className = 'msg ok';
+    await loadAll();
+  } catch (e) {
+    msg.textContent = e.message; msg.className = 'msg err';
+  }
+};
+
+/* =========================================================================
+   Boot
+   ========================================================================= */
+async function loadAll() {
+  soundfonts = await api('/api/soundfonts');
+  patches = await api('/api/patches');
+  renderSoundfonts();
+  renderPatches();
+  renderPatchPads();
+  await renderConfigs();
+}
+
+async function pollHealth() {
+  try {
+    const h = await api('/api/health');
+    setLED('audio', h.audio);
+    setLED('midi', h.midi);
+    setLED('api', h.control);
+  } catch (e) { setLED('api', false); }
+}
+
+(async function init() {
+  bindKeys();
+  bindBankProgram();
+  bindEncoder();
+  bindPatchPads();
+  bindKnobs();
+  bindWheels();
+  bindPads();
+  bindPerf();
+  bindTransport();
+  bindGlobal();
+  renderQuantizeOptions();
+
+  await loadAll();
+  await refreshState();
+  pollHealth();
+  setInterval(refreshState, 2500);
+  setInterval(pollHealth, 5000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520" width="1600" height="520" role="img" aria-labelledby="title desc">
+<title id="title">VirtualHardSynth futuristic 49-key controller UI</title>
+<desc id="desc">A cyber-futuristic 49-key synthesizer control surface with interactive-ready SVG element IDs for web integration.</desc>
+<defs>
+  <linearGradient id="chassis" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#18212b"/>
+    <stop offset="0.5" stop-color="#0c1219"/>
+    <stop offset="1" stop-color="#05080d"/>
+  </linearGradient>
+  <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#111924"/>
+    <stop offset="1" stop-color="#070b10"/>
+  </linearGradient>
+  <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#07161d"/>
+    <stop offset="1" stop-color="#02070a"/>
+  </linearGradient>
+  <linearGradient id="whiteKey" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="0.62" stop-color="#eef2f5"/>
+    <stop offset="1" stop-color="#c8d0d7"/>
+  </linearGradient>
+  <linearGradient id="blackKey" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#242b34"/>
+    <stop offset="0.55" stop-color="#0a0e13"/>
+    <stop offset="1" stop-color="#020305"/>
+  </linearGradient>
+  <radialGradient id="knob" cx="40%" cy="35%" r="70%">
+    <stop offset="0" stop-color="#4b5967"/>
+    <stop offset="0.45" stop-color="#111820"/>
+    <stop offset="1" stop-color="#020406"/>
+  </radialGradient>
+  <filter id="cyanGlow" x="-100%" y="-100%" width="300%" height="300%">
+    <feGaussianBlur stdDeviation="5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="magentaGlow" x="-100%" y="-100%" width="300%" height="300%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity=".65"/>
+  </filter>
+  <style>
+    .txt { font-family: Inter, ui-sans-serif, system-ui, sans-serif; fill:#d9e3ec; }
+    .micro { font-size:9px; letter-spacing:1.6px; fill:#7a91a5; }
+    .label { font-size:10px; letter-spacing:1.2px; fill:#6ef6ff; }
+    .value { font-size:17px; font-weight:700; fill:#62f6ff; }
+    .click { cursor:pointer; }
+    .click:hover .hit, .key:hover { filter:url(#cyanGlow); }
+    .hit { transition:.15s ease; }
+    .btn { fill:#0b1118; stroke:#2a3743; stroke-width:1.2; }
+    .btnActive { fill:#09242b; stroke:#57f5ff; stroke-width:1.6; }
+    .padCyan { fill:#0b1118; stroke:#49efff; stroke-width:2; }
+    .padMagenta { fill:#120b16; stroke:#f153ee; stroke-width:2; }
+  </style>
+</defs>
+
+<!-- device shadow -->
+<ellipse cx="800" cy="497" rx="730" ry="18" fill="#000" opacity=".65"/>
+
+<!-- angular chassis -->
+<g id="synth-chassis" filter="url(#shadow)">
+  <path d="M38 54 L72 18 H1518 L1562 54 L1582 92 V438 L1546 486 H66 L18 442 V94 Z"
+        fill="url(#chassis)" stroke="#263847" stroke-width="2"/>
+  <path d="M62 72 L88 40 H1508 L1540 72" fill="none" stroke="#4bf1ff" stroke-width="3" opacity=".75" filter="url(#cyanGlow)"/>
+  <path d="M1460 40 H1520 L1542 64" fill="none" stroke="#f052eb" stroke-width="4" opacity=".85" filter="url(#magentaGlow)"/>
+  <path d="M28 120 L54 90 V396 L28 424" fill="none" stroke="#19dff3" stroke-width="3" opacity=".7"/>
+  <path d="M1572 118 L1545 92 V400 L1572 428" fill="none" stroke="#f052eb" stroke-width="3" opacity=".65"/>
+</g>
+
+<!-- logo -->
+<g id="brand">
+  <text x="84" y="76" class="txt" font-size="28" font-weight="900" font-style="italic" fill="#66f6ff">VIRTUAL</text>
+  <text x="216" y="76" class="txt" font-size="28" font-weight="900" font-style="italic" fill="#f05ee8">HARD</text>
+  <text x="84" y="94" class="micro">SYNTH // LIVE PATCH MATRIX</text>
+</g>
+
+<!-- top control panels -->
+<rect x="74" y="112" width="330" height="154" rx="13" fill="url(#panel)" stroke="#22323f"/>
+<rect x="424" y="112" width="470" height="154" rx="13" fill="url(#panel)" stroke="#22323f"/>
+<rect x="914" y="112" width="300" height="154" rx="13" fill="url(#panel)" stroke="#22323f"/>
+<rect x="1234" y="112" width="292" height="154" rx="13" fill="url(#panel)" stroke="#22323f"/>
+
+<!-- assignable knobs -->
+<text x="94" y="132" class="label">ASSIGNABLE</text>
+
+<g id="knob-a" class="click" data-control="knob" data-index="0">
+  <circle class="hit" cx="120" cy="188" r="29" fill="#061016" stroke="#2cf2ff" stroke-width="2"/>
+  <circle cx="120" cy="188" r="23" fill="url(#knob)" stroke="#54616d"/>
+  <line x1="120" y1="188" x2="120" y2="168" stroke="#e8fbff" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M98 170 A29 29 0 0 1 142 170" fill="none" stroke="#45f2ff" stroke-width="3" opacity=".85"/>
+  <text x="120" y="232" class="txt" font-size="11" text-anchor="middle">A</text>
+</g>
+<g id="knob-b" class="click" data-control="knob" data-index="1">
+  <circle class="hit" cx="194" cy="188" r="29" fill="#061016" stroke="#2cf2ff" stroke-width="2"/>
+  <circle cx="194" cy="188" r="23" fill="url(#knob)" stroke="#54616d"/>
+  <line x1="194" y1="188" x2="194" y2="168" stroke="#e8fbff" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M172 170 A29 29 0 0 1 216 170" fill="none" stroke="#ef58e7" stroke-width="3" opacity=".85"/>
+  <text x="194" y="232" class="txt" font-size="11" text-anchor="middle">B</text>
+</g>
+<g id="knob-c" class="click" data-control="knob" data-index="2">
+  <circle class="hit" cx="268" cy="188" r="29" fill="#061016" stroke="#2cf2ff" stroke-width="2"/>
+  <circle cx="268" cy="188" r="23" fill="url(#knob)" stroke="#54616d"/>
+  <line x1="268" y1="188" x2="268" y2="168" stroke="#e8fbff" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M246 170 A29 29 0 0 1 290 170" fill="none" stroke="#45f2ff" stroke-width="3" opacity=".85"/>
+  <text x="268" y="232" class="txt" font-size="11" text-anchor="middle">C</text>
+</g>
+<g id="knob-d" class="click" data-control="knob" data-index="3">
+  <circle class="hit" cx="342" cy="188" r="29" fill="#061016" stroke="#2cf2ff" stroke-width="2"/>
+  <circle cx="342" cy="188" r="23" fill="url(#knob)" stroke="#54616d"/>
+  <line x1="342" y1="188" x2="342" y2="168" stroke="#e8fbff" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M320 170 A29 29 0 0 1 364 170" fill="none" stroke="#ef58e7" stroke-width="3" opacity=".85"/>
+  <text x="342" y="232" class="txt" font-size="11" text-anchor="middle">D</text>
+</g><text x="369" y="132" class="label" text-anchor="end">GLOBAL</text><g id="global-shift" class="click" data-action="shift">
+      <rect class="hit btn" x="344" y="150" width="42" height="25" rx="5"/>
+      <text x="365" y="166" class="txt" font-size="8.5" text-anchor="middle">SHIFT</text>
+    </g><g id="global-setup" class="click" data-action="setup">
+      <rect class="hit btn" x="344" y="184" width="42" height="25" rx="5"/>
+      <text x="365" y="200" class="txt" font-size="8.5" text-anchor="middle">SETUP</text>
+    </g><g id="global-panic" class="click" data-action="panic">
+      <rect class="hit btn" x="344" y="218" width="42" height="25" rx="5"/>
+      <text x="365" y="234" class="txt" font-size="8.5" text-anchor="middle">PANIC</text>
+    </g>
+<g id="pitch-wheel" class="click" data-control="pitch">
+  <rect class="hit" x="81" y="292" width="30" height="112" rx="14" fill="#061018" stroke="#2be9ff" stroke-width="2"/>
+  <rect x="88" y="307" width="16" height="82" rx="8" fill="url(#knob)" stroke="#354955"/>
+  <line x1="89" y1="342" x2="103" y2="342" stroke="#9dfbff" stroke-width="2"/>
+  <text x="96" y="422" class="micro" text-anchor="middle">PITCH</text>
+</g>
+<g id="mod-wheel" class="click" data-control="mod">
+  <rect class="hit" x="127" y="292" width="30" height="112" rx="14" fill="#061018" stroke="#2be9ff" stroke-width="2"/>
+  <rect x="134" y="307" width="16" height="82" rx="8" fill="url(#knob)" stroke="#354955"/>
+  <line x1="135" y1="342" x2="149" y2="342" stroke="#9dfbff" stroke-width="2"/>
+  <text x="142" y="422" class="micro" text-anchor="middle">MOD</text>
+</g>
+<text x="446" y="132" class="label">BANK / PROGRAM</text>
+<rect x="502" y="144" width="258" height="100" rx="8" fill="url(#screen)" stroke="#2c4452"/>
+<path d="M512 225 H748" stroke="#163d48" stroke-width="1"/>
+<text id="display-bank" x="520" y="166" class="micro">BANK 000</text>
+<text id="display-program" x="606" y="166" class="micro">PROGRAM 000</text>
+<text id="display-patch-name" x="520" y="194" class="value">YAMAHA GRAND PIANO</text>
+<text id="display-soundfont" x="520" y="214" class="txt" font-size="10" fill="#8ba6b7">FluidR3 GM • 0:0</text>
+<g id="display-meter"><rect x="522" y="230" width="4" height="4" rx="2" fill="#35efff" opacity="0.45"/><rect x="530" y="223" width="4" height="11" rx="2" fill="#35efff" opacity="0.57"/><rect x="538" y="216" width="4" height="18" rx="2" fill="#35efff" opacity="0.69"/><rect x="546" y="228" width="4" height="6" rx="2" fill="#35efff" opacity="0.81"/><rect x="554" y="221" width="4" height="13" rx="2" fill="#35efff" opacity="0.45"/><rect x="562" y="214" width="4" height="20" rx="2" fill="#35efff" opacity="0.57"/><rect x="570" y="226" width="4" height="8" rx="2" fill="#35efff" opacity="0.69"/><rect x="578" y="219" width="4" height="15" rx="2" fill="#35efff" opacity="0.81"/><rect x="586" y="212" width="4" height="22" rx="2" fill="#35efff" opacity="0.45"/><rect x="594" y="224" width="4" height="10" rx="2" fill="#35efff" opacity="0.57"/><rect x="602" y="217" width="4" height="17" rx="2" fill="#35efff" opacity="0.69"/><rect x="610" y="229" width="4" height="5" rx="2" fill="#35efff" opacity="0.81"/><rect x="618" y="222" width="4" height="12" rx="2" fill="#35efff" opacity="0.45"/><rect x="626" y="215" width="4" height="19" rx="2" fill="#35efff" opacity="0.57"/><rect x="634" y="227" width="4" height="7" rx="2" fill="#35efff" opacity="0.69"/><rect x="642" y="220" width="4" height="14" rx="2" fill="#35efff" opacity="0.81"/><rect x="650" y="213" width="4" height="21" rx="2" fill="#35efff" opacity="0.45"/><rect x="658" y="225" width="4" height="9" rx="2" fill="#35efff" opacity="0.57"/><rect x="666" y="218" width="4" height="16" rx="2" fill="#35efff" opacity="0.69"/><rect x="674" y="230" width="4" height="4" rx="2" fill="#35efff" opacity="0.81"/><rect x="682" y="223" width="4" height="11" rx="2" fill="#35efff" opacity="0.45"/><rect x="690" y="216" width="4" height="18" rx="2" fill="#35efff" opacity="0.57"/><rect x="698" y="228" width="4" height="6" rx="2" fill="#35efff" opacity="0.69"/><rect x="706" y="221" width="4" height="13" rx="2" fill="#35efff" opacity="0.81"/><rect x="714" y="214" width="4" height="20" rx="2" fill="#35efff" opacity="0.45"/><rect x="722" y="226" width="4" height="8" rx="2" fill="#35efff" opacity="0.57"/><rect x="730" y="219" width="4" height="15" rx="2" fill="#35efff" opacity="0.69"/><rect x="738" y="212" width="4" height="22" rx="2" fill="#35efff" opacity="0.81"/></g><g id="bank-prev" class="click" data-action="bankPrev">
+      <rect class="hit btn" x="446" y="153" width="17" height="28" rx="4"/>
+      <text x="454.5" y="171" class="txt" font-size="11" text-anchor="middle">◀</text>
+    </g><g id="bank-next" class="click" data-action="bankNext">
+      <rect class="hit btn" x="446" y="190" width="17" height="28" rx="4"/>
+      <text x="454.5" y="208" class="txt" font-size="11" text-anchor="middle">▶</text>
+    </g><g id="program-prev" class="click" data-action="programPrev">
+      <rect class="hit btn" x="468" y="153" width="17" height="28" rx="4"/>
+      <text x="476.5" y="171" class="txt" font-size="11" text-anchor="middle">−</text>
+    </g><g id="program-next" class="click" data-action="programNext">
+      <rect class="hit btn" x="468" y="190" width="17" height="28" rx="4"/>
+      <text x="476.5" y="208" class="txt" font-size="11" text-anchor="middle">＋</text>
+    </g>
+<g id="main-encoder" class="click" data-control="encoder">
+  <circle class="hit" cx="820" cy="194" r="42" fill="#061016" stroke="#31efff" stroke-width="3"/>
+  <circle cx="820" cy="194" r="33" fill="url(#knob)" stroke="#657783"/>
+  <line x1="820" y1="194" x2="820" y2="163" stroke="#eaffff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M786 174 A40 40 0 0 1 854 174" fill="none" stroke="#f15ce7" stroke-width="3" opacity=".8"/>
+  <text x="820" y="248" class="micro" text-anchor="middle">PUSH / TURN</text>
+</g>
+<text x="932" y="132" class="label">PATCH SELECT</text><g id="patch-1" class="click" data-action="patchSelect" data-value="1">
+      <rect class="hit btnActive" x="934" y="149" width="49" height="35" rx="6"/>
+      <text x="958.5" y="171" class="txt" font-size="12" text-anchor="middle">1</text>
+    </g><g id="patch-2" class="click" data-action="patchSelect" data-value="2">
+      <rect class="hit btn" x="995" y="149" width="49" height="35" rx="6"/>
+      <text x="1019.5" y="171" class="txt" font-size="12" text-anchor="middle">2</text>
+    </g><g id="patch-3" class="click" data-action="patchSelect" data-value="3">
+      <rect class="hit btn" x="1056" y="149" width="49" height="35" rx="6"/>
+      <text x="1080.5" y="171" class="txt" font-size="12" text-anchor="middle">3</text>
+    </g><g id="patch-4" class="click" data-action="patchSelect" data-value="4">
+      <rect class="hit btn" x="1117" y="149" width="49" height="35" rx="6"/>
+      <text x="1141.5" y="171" class="txt" font-size="12" text-anchor="middle">4</text>
+    </g><g id="patch-5" class="click" data-action="patchSelect" data-value="5">
+      <rect class="hit btn" x="934" y="196" width="49" height="35" rx="6"/>
+      <text x="958.5" y="218" class="txt" font-size="12" text-anchor="middle">5</text>
+    </g><g id="patch-6" class="click" data-action="patchSelect" data-value="6">
+      <rect class="hit btn" x="995" y="196" width="49" height="35" rx="6"/>
+      <text x="1019.5" y="218" class="txt" font-size="12" text-anchor="middle">6</text>
+    </g><g id="patch-7" class="click" data-action="patchSelect" data-value="7">
+      <rect class="hit btn" x="1056" y="196" width="49" height="35" rx="6"/>
+      <text x="1080.5" y="218" class="txt" font-size="12" text-anchor="middle">7</text>
+    </g><g id="patch-8" class="click" data-action="patchSelect" data-value="8">
+      <rect class="hit btn" x="1117" y="196" width="49" height="35" rx="6"/>
+      <text x="1141.5" y="218" class="txt" font-size="12" text-anchor="middle">8</text>
+    </g><g id="patch-pagePrev" class="click" data-action="pagePrev">
+      <rect class="hit btn" x="936" y="239" width="48" height="20" rx="4"/>
+      <text x="960" y="253" class="micro" text-anchor="middle">◀</text>
+    </g><g id="patch-page" class="click" data-action="page">
+      <rect class="hit btn" x="1020" y="239" width="64" height="20" rx="4"/>
+      <text x="1052" y="253" class="micro" text-anchor="middle">PAGE</text>
+    </g><g id="patch-pageNext" class="click" data-action="pageNext">
+      <rect class="hit btn" x="1104" y="239" width="48" height="20" rx="4"/>
+      <text x="1128" y="253" class="micro" text-anchor="middle">▶</text>
+    </g><text x="1248" y="132" class="label">PERFORMANCE</text><g id="perf-arp" class="click" data-action="arp">
+      <rect class="hit btnActive" x="1248" y="150" width="54" height="30" rx="5"/>
+      <text x="1275" y="169" class="txt" font-size="8.8" text-anchor="middle">ARP</text>
+    </g><g id="perf-chord" class="click" data-action="chord">
+      <rect class="hit btn" x="1313" y="150" width="54" height="30" rx="5"/>
+      <text x="1340" y="169" class="txt" font-size="8.8" text-anchor="middle">CHORD</text>
+    </g><g id="perf-scale" class="click" data-action="scale">
+      <rect class="hit btn" x="1378" y="150" width="54" height="30" rx="5"/>
+      <text x="1405" y="169" class="txt" font-size="8.8" text-anchor="middle">SCALE</text>
+    </g><g id="perf-hold" class="click" data-action="hold">
+      <rect class="hit btn" x="1443" y="150" width="54" height="30" rx="5"/>
+      <text x="1470" y="169" class="txt" font-size="8.8" text-anchor="middle">HOLD</text>
+    </g><g id="perf-octDown" class="click" data-action="octDown">
+      <rect class="hit btn" x="1248" y="194" width="54" height="30" rx="5"/>
+      <text x="1275" y="213" class="txt" font-size="8.8" text-anchor="middle">OCT−</text>
+    </g><g id="perf-octUp" class="click" data-action="octUp">
+      <rect class="hit btn" x="1313" y="194" width="54" height="30" rx="5"/>
+      <text x="1340" y="213" class="txt" font-size="8.8" text-anchor="middle">OCT+</text>
+    </g><g id="perf-transpose" class="click" data-action="transpose">
+      <rect class="hit btn" x="1378" y="194" width="54" height="30" rx="5"/>
+      <text x="1405" y="213" class="txt" font-size="8.8" text-anchor="middle">TRANS</text>
+    </g><g id="perf-latch" class="click" data-action="latch">
+      <rect class="hit btnActive" x="1443" y="194" width="54" height="30" rx="5"/>
+      <text x="1470" y="213" class="txt" font-size="8.8" text-anchor="middle">LATCH</text>
+    </g>
+<text x="1248" y="244" class="label">TRANSPORT / TRIGGER</text>
+<g id="transport-prev" class="click" data-action="prev">
+      <rect class="hit btn" x="1248" y="274" width="36" height="28" rx="5"/>
+      <text x="1266" y="293" class="txt" font-size="10" text-anchor="middle" fill="#d9e3ec">⏮</text>
+    </g><g id="transport-rew" class="click" data-action="rew">
+      <rect class="hit btn" x="1292" y="274" width="36" height="28" rx="5"/>
+      <text x="1310" y="293" class="txt" font-size="10" text-anchor="middle" fill="#d9e3ec">◀</text>
+    </g><g id="transport-play" class="click" data-action="play">
+      <rect class="hit btn" x="1336" y="274" width="36" height="28" rx="5"/>
+      <text x="1354" y="293" class="txt" font-size="10" text-anchor="middle" fill="#d9e3ec">▶</text>
+    </g><g id="transport-stop" class="click" data-action="stop">
+      <rect class="hit btn" x="1380" y="274" width="36" height="28" rx="5"/>
+      <text x="1398" y="293" class="txt" font-size="10" text-anchor="middle" fill="#d9e3ec">■</text>
+    </g><g id="transport-record" class="click" data-action="record">
+      <rect class="hit btn" x="1424" y="274" width="36" height="28" rx="5"/>
+      <text x="1442" y="293" class="txt" font-size="10" text-anchor="middle" fill="#ff5c67">●</text>
+    </g><g id="pad-1" class="click" data-action="padTrigger" data-value="1">
+      <rect class="hit padCyan" x="1248" y="314" width="48" height="38" rx="6"/>
+      <text x="1272" y="338" class="txt" font-size="10" text-anchor="middle">1</text>
+    </g><g id="pad-2" class="click" data-action="padTrigger" data-value="2">
+      <rect class="hit padCyan" x="1307" y="314" width="48" height="38" rx="6"/>
+      <text x="1331" y="338" class="txt" font-size="10" text-anchor="middle">2</text>
+    </g><g id="pad-3" class="click" data-action="padTrigger" data-value="3">
+      <rect class="hit padCyan" x="1366" y="314" width="48" height="38" rx="6"/>
+      <text x="1390" y="338" class="txt" font-size="10" text-anchor="middle">3</text>
+    </g><g id="pad-4" class="click" data-action="padTrigger" data-value="4">
+      <rect class="hit padCyan" x="1425" y="314" width="48" height="38" rx="6"/>
+      <text x="1449" y="338" class="txt" font-size="10" text-anchor="middle">4</text>
+    </g><g id="pad-5" class="click" data-action="padTrigger" data-value="5">
+      <rect class="hit padMagenta" x="1248" y="363" width="48" height="38" rx="6"/>
+      <text x="1272" y="387" class="txt" font-size="10" text-anchor="middle">5</text>
+    </g><g id="pad-6" class="click" data-action="padTrigger" data-value="6">
+      <rect class="hit padMagenta" x="1307" y="363" width="48" height="38" rx="6"/>
+      <text x="1331" y="387" class="txt" font-size="10" text-anchor="middle">6</text>
+    </g><g id="pad-7" class="click" data-action="padTrigger" data-value="7">
+      <rect class="hit padMagenta" x="1366" y="363" width="48" height="38" rx="6"/>
+      <text x="1390" y="387" class="txt" font-size="10" text-anchor="middle">7</text>
+    </g><g id="pad-8" class="click" data-action="padTrigger" data-value="8">
+      <rect class="hit padMagenta" x="1425" y="363" width="48" height="38" rx="6"/>
+      <text x="1449" y="387" class="txt" font-size="10" text-anchor="middle">8</text>
+    </g>
+<g id="status" transform="translate(1496,288)">
+  <text x="0" y="0" class="label" text-anchor="end">STATUS</text>
+  <circle id="status-audio" cx="-76" cy="22" r="4" fill="#7cff9b" filter="url(#cyanGlow)"/>
+  <text x="-66" y="25" class="micro">AUDIO</text>
+  <circle id="status-midi" cx="-76" cy="42" r="4" fill="#4ef1ff"/>
+  <text x="-66" y="45" class="micro">MIDI</text>
+  <circle id="status-api" cx="-76" cy="62" r="4" fill="#f05ee8"/>
+  <text x="-66" y="65" class="micro">API</text>
+</g>
+
+<path d="M192 286 H1515 L1530 304 V449 L1512 466 H190 L174 448 V306 Z"
+      fill="#05080c" stroke="#223746" stroke-width="2"/>
+<path d="M202 291 H1500" stroke="#45f4ff" stroke-width="3" opacity=".75" filter="url(#cyanGlow)"/>
+<rect id="key-36" class="key click" data-midi="36" data-note="midi-36"
+            x="206.00" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-38" class="key click" data-midi="38" data-note="midi-38"
+            x="250.10" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-40" class="key click" data-midi="40" data-note="midi-40"
+            x="294.20" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-41" class="key click" data-midi="41" data-note="midi-41"
+            x="338.30" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-43" class="key click" data-midi="43" data-note="midi-43"
+            x="382.40" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-45" class="key click" data-midi="45" data-note="midi-45"
+            x="426.50" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-47" class="key click" data-midi="47" data-note="midi-47"
+            x="470.60" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-48" class="key click" data-midi="48" data-note="midi-48"
+            x="514.70" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-50" class="key click" data-midi="50" data-note="midi-50"
+            x="558.80" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-52" class="key click" data-midi="52" data-note="midi-52"
+            x="602.90" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-53" class="key click" data-midi="53" data-note="midi-53"
+            x="647.00" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-55" class="key click" data-midi="55" data-note="midi-55"
+            x="691.10" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-57" class="key click" data-midi="57" data-note="midi-57"
+            x="735.20" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-59" class="key click" data-midi="59" data-note="midi-59"
+            x="779.30" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-60" class="key click" data-midi="60" data-note="midi-60"
+            x="823.40" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-62" class="key click" data-midi="62" data-note="midi-62"
+            x="867.50" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-64" class="key click" data-midi="64" data-note="midi-64"
+            x="911.60" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-65" class="key click" data-midi="65" data-note="midi-65"
+            x="955.70" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-67" class="key click" data-midi="67" data-note="midi-67"
+            x="999.80" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-69" class="key click" data-midi="69" data-note="midi-69"
+            x="1043.90" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-71" class="key click" data-midi="71" data-note="midi-71"
+            x="1088.00" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-72" class="key click" data-midi="72" data-note="midi-72"
+            x="1132.10" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-74" class="key click" data-midi="74" data-note="midi-74"
+            x="1176.20" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-76" class="key click" data-midi="76" data-note="midi-76"
+            x="1220.30" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-77" class="key click" data-midi="77" data-note="midi-77"
+            x="1264.40" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-79" class="key click" data-midi="79" data-note="midi-79"
+            x="1308.50" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-81" class="key click" data-midi="81" data-note="midi-81"
+            x="1352.60" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-83" class="key click" data-midi="83" data-note="midi-83"
+            x="1396.70" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-84" class="key click" data-midi="84" data-note="midi-84"
+            x="1440.80" y="310" width="43.10" height="140" rx="3"
+            fill="url(#whiteKey)" stroke="#8c969f" stroke-width="1"/><rect id="key-37" class="key click" data-midi="37" data-note="midi-37"
+                x="236.60" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-39" class="key click" data-midi="39" data-note="midi-39"
+                x="280.70" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-42" class="key click" data-midi="42" data-note="midi-42"
+                x="368.90" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-44" class="key click" data-midi="44" data-note="midi-44"
+                x="413.00" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-46" class="key click" data-midi="46" data-note="midi-46"
+                x="457.10" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-49" class="key click" data-midi="49" data-note="midi-49"
+                x="545.30" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-51" class="key click" data-midi="51" data-note="midi-51"
+                x="589.40" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-54" class="key click" data-midi="54" data-note="midi-54"
+                x="677.60" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-56" class="key click" data-midi="56" data-note="midi-56"
+                x="721.70" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-58" class="key click" data-midi="58" data-note="midi-58"
+                x="765.80" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-61" class="key click" data-midi="61" data-note="midi-61"
+                x="854.00" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-63" class="key click" data-midi="63" data-note="midi-63"
+                x="898.10" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-66" class="key click" data-midi="66" data-note="midi-66"
+                x="986.30" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-68" class="key click" data-midi="68" data-note="midi-68"
+                x="1030.40" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-70" class="key click" data-midi="70" data-note="midi-70"
+                x="1074.50" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-73" class="key click" data-midi="73" data-note="midi-73"
+                x="1162.70" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-75" class="key click" data-midi="75" data-note="midi-75"
+                x="1206.80" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-78" class="key click" data-midi="78" data-note="midi-78"
+                x="1295.00" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-80" class="key click" data-midi="80" data-note="midi-80"
+                x="1339.10" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/><rect id="key-82" class="key click" data-midi="82" data-note="midi-82"
+                x="1383.20" y="310" width="27" height="88" rx="3"
+                fill="url(#blackKey)" stroke="#38434e" stroke-width="1.2"/>
+<path d="M610 478 H990" stroke="#162b37" stroke-width="2"/>
+<text x="800" y="488" class="micro" text-anchor="middle" fill="#56f5ff">49 KEY // WEB SYNTH CONTROL SURFACE</text>
+<path d="M72 458 L98 458 L108 468 L132 468" fill="none" stroke="#4bf1ff" stroke-width="3"/>
+<path d="M1468 468 L1492 468 L1502 458 L1528 458" fill="none" stroke="#f052eb" stroke-width="3"/>
+</svg>
