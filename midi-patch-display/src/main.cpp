@@ -27,6 +27,18 @@
 //   CYD -> Pi   {"t":"cmd","action":"quantize_set","grid":"1/16"}
 //   CYD -> Pi   {"t":"cmd","action":"loop_bars_set","bars":"4"}  or "auto"
 //
+// Wi-Fi picker (the Pi does the scanning and joining via NetworkManager):
+//   Pi  -> CYD  "state" frames also carry "wifi": 0-4 bars, -1 = offline
+//   Pi  -> CYD  {"t":"wifi","st":"list","cur":"Home","ip":"192.168.50.20",
+//                "nets":[{"s":"Home","b":4,"l":true,"c":true}],"prompt":true}
+//   Pi  -> CYD  {"t":"wifi","st":"busy","msg":"scanning..."}
+//   Pi  -> CYD  {"t":"wifi","st":"ok","ssid":"Home","ip":"192.168.50.20"}
+//   Pi  -> CYD  {"t":"wifi","st":"fail","msg":"wrong password?"}
+//   CYD -> Pi   {"t":"cmd","action":"wifi_scan"}
+//   CYD -> Pi   {"t":"wifi_join","ssid":"Home","psk":"..."}
+// "prompt" opens the picker unasked - the Pi sends it on first boot, when it
+// has no network and the touchscreen is the only way to give it one.
+//
 // Four screens - home, dial, loop, quantize - reached from a nav bar at the
 // top of every screen (HOME/DIAL/LOOP/QNT), not by swiping. Dial: banks
 // (from "banks") listed down the left, a 10-key + program display on the
@@ -69,7 +81,10 @@ static uint32_t lastFireMs   = 0;
 static uint32_t lastVolSendMs = 0;
 
 // screens - order matches ui.cpp's NAV_LABEL[] (HOME/DIAL/LOOP/QNT)
-enum Screen { SCREEN_HOME, SCREEN_DIAL, SCREEN_LOOP, SCREEN_QUANTIZE };
+// The last two aren't on the nav bar - they're full-screen and reached from
+// the status bar.
+enum Screen { SCREEN_HOME, SCREEN_DIAL, SCREEN_LOOP, SCREEN_QUANTIZE,
+              SCREEN_WIFI, SCREEN_KEYS };
 static Screen   screen = SCREEN_HOME;
 
 // dial screen
@@ -90,6 +105,16 @@ static bool     clrLongFired = false;
 
 // quantize screen
 static bool     quantKeyHeld = false;
+
+// wifi picker + keyboard
+static WifiView wifi;
+static bool     wifiKeyHeld = false;
+static uint32_t wifiReturnAt = 0;     // after a successful join, back to home
+static char     joinSsid[33] = "";
+static char     keysText[64] = "";    // WPA2 passphrases top out at 63
+static size_t   keysLen = 0;
+static int      keysLayer = 0;
+static int      keysHeld = -1;        // key index being pressed, for feedback
 
 // ---------------------------------------------------------------------------
 
@@ -150,6 +175,15 @@ static void sendBarsCmd(const char *bars) {
     Serial.println();
 }
 
+static void sendWifiJoin(const char *ssid, const char *psk) {
+    JsonDocument d;
+    d["t"] = "wifi_join";
+    d["ssid"] = ssid;
+    d["psk"] = psk;
+    serializeJson(d, Serial);
+    Serial.println();
+}
+
 static void sendHello() {
     JsonDocument d;
     d["t"] = "hello";
@@ -160,6 +194,59 @@ static void sendHello() {
 }
 
 // ---------------------------------------------------------------------------
+
+static void gotoScreen(Screen target);
+
+static void handleWifiFrame(JsonDocument &d) {
+    lastStateMs = millis();
+    const char *st = d["st"] | "";
+
+    if (!strcmp(st, "list")) {
+        wifi.count = 0;
+        for (JsonObject n : d["nets"].as<JsonArray>()) {
+            if (wifi.count >= WIFI_MAX_NETS) break;
+            WifiNet &w = wifi.nets[wifi.count++];
+            strlcpy(w.ssid, n["s"] | "", sizeof(w.ssid));
+            w.bars = n["b"] | 0;
+            w.locked = n["l"] | false;
+            w.current = n["c"] | false;
+        }
+        const char *cur = d["cur"] | "";
+        if (cur[0]) {
+            snprintf(wifi.status, sizeof(wifi.status), "%s  %s", cur, d["ip"] | "");
+            wifi.level = 1;
+        } else {
+            strlcpy(wifi.status, "not connected", sizeof(wifi.status));
+            wifi.level = 2;
+        }
+        wifi.busy = false;
+    } else if (!strcmp(st, "busy")) {
+        strlcpy(wifi.status, d["msg"] | "working...", sizeof(wifi.status));
+        wifi.level = 0;
+        wifi.busy = true;
+    } else if (!strcmp(st, "ok")) {
+        snprintf(wifi.status, sizeof(wifi.status), "connected  %s", d["ip"] | "");
+        wifi.level = 1;
+        wifi.busy = false;
+        for (int i = 0; i < wifi.count; i++)
+            wifi.nets[i].current = !strcmp(wifi.nets[i].ssid, d["ssid"] | "");
+        wifiReturnAt = millis() + 2500;
+        wakeBacklight();
+    } else if (!strcmp(st, "fail")) {
+        strlcpy(wifi.status, d["msg"] | "failed", sizeof(wifi.status));
+        wifi.level = 2;
+        wifi.busy = false;
+        wakeBacklight();
+    }
+
+    // Never yank the user out of the keyboard mid-password.
+    if ((d["prompt"] | false) && screen != SCREEN_KEYS && screen != SCREEN_WIFI) {
+        wakeBacklight();
+        gotoScreen(SCREEN_WIFI);
+    } else if (screen == SCREEN_WIFI) {
+        uiWifiRender(wifi);
+    }
+}
 
 static void handleLine(const char *line) {
     JsonDocument d;
@@ -196,6 +283,7 @@ static void handleLine(const char *line) {
         state.name[sizeof(state.name) - 1] = '\0';
         strncpy(state.sf, d["sf"] | "", sizeof(state.sf) - 1);
         state.sf[sizeof(state.sf) - 1] = '\0';
+        state.wifi = d["wifi"] | -1;
         state.linked = true;
         lastStateMs = millis();
         // A patch change from the keyboard should light the screen back up.
@@ -217,6 +305,9 @@ static void handleLine(const char *line) {
     else if (!strcmp(t, "toast")) {
         if (screen == SCREEN_HOME) uiToast(d["msg"] | "");
         wakeBacklight();
+    }
+    else if (!strcmp(t, "wifi")) {
+        handleWifiFrame(d);
     }
 }
 
@@ -277,6 +368,7 @@ static void fireButton(int btn) {
         case BTN_NEXT:    sendCmd("patch_next"); break;
         case BTN_BANK_UP: sendCmd("bank_next");  break;
         case BTN_PANIC:   sendCmd("panic"); uiToast("PANIC"); break;
+        case BTN_WIFI:    gotoScreen(SCREEN_WIFI); break;
         default: break;
     }
 }
@@ -288,11 +380,18 @@ static void fireButton(int btn) {
 // left can never leak onto the one you land on.
 static void gotoScreen(Screen target) {
     if (target == screen) return;
+    Screen from = screen;
     screen = target;
     dialKeyHeld = false;
     loopKeyHeld = false;
     clrPressActive = false;
     quantKeyHeld = false;
+    // The finger that got us here is usually still down; on the Wi-Fi and
+    // keyboard screens make it lift first, or it lands on whatever key sits
+    // under the button it just pressed.
+    wifiKeyHeld = true;
+    keysHeld = -1;
+    wifiReturnAt = 0;
 
     switch (target) {
         case SCREEN_HOME:
@@ -314,8 +413,95 @@ static void gotoScreen(Screen target) {
             uiQuantBegin();
             uiQuantRender(state, true);
             break;
+        case SCREEN_WIFI:
+            // Coming back from the keyboard keeps whatever the join is
+            // reporting; arriving fresh starts a scan.
+            if (from != SCREEN_KEYS || !wifi.busy) {
+                wifi.busy = true;
+                strlcpy(wifi.status, "scanning...", sizeof(wifi.status));
+                wifi.level = 0;
+                sendCmd("wifi_scan");
+            }
+            uiWifiRender(wifi);
+            return;   // full screen - no nav bar
+        case SCREEN_KEYS:
+            memset(keysText, 0, sizeof(keysText));
+            keysLen = 0;
+            keysLayer = 0;
+            uiKeysBegin(joinSsid, keysLayer);
+            return;
     }
     uiNavRender((int)target);
+}
+
+static void joinNetwork(const char *ssid, const char *psk) {
+    sendWifiJoin(ssid, psk);
+    // Don't keep the password around once it's sent.
+    memset(keysText, 0, sizeof(keysText));
+    keysLen = 0;
+    snprintf(wifi.status, sizeof(wifi.status), "joining %s...", ssid);
+    wifi.level = 0;
+    wifi.busy = true;
+    if (screen == SCREEN_WIFI) uiWifiRender(wifi);
+    else gotoScreen(SCREEN_WIFI);
+}
+
+static void fireWifiKey(int key) {
+    if (key == WIFI_BACK) {
+        gotoScreen(SCREEN_HOME);
+    } else if (key == WIFI_RESCAN) {
+        // Not gated on busy: if a reply went missing, this is the way out.
+        // The Pi answers "still working" if it really is.
+        wifi.busy = true;
+        strlcpy(wifi.status, "scanning...", sizeof(wifi.status));
+        wifi.level = 0;
+        sendCmd("wifi_scan");
+        uiWifiRender(wifi);
+    } else if (key >= 0 && key < wifi.count) {
+        const WifiNet &n = wifi.nets[key];
+        strlcpy(joinSsid, n.ssid, sizeof(joinSsid));
+        if (n.locked) gotoScreen(SCREEN_KEYS);
+        else joinNetwork(joinSsid, "");
+    }
+}
+
+static void fireKeysKey(int code) {
+    switch (code) {
+        case KEY_BKSP:
+            if (keysLen) keysText[--keysLen] = '\0';
+            uiKeysText(keysText);
+            break;
+        case KEY_SHIFT:
+            keysLayer = (keysLayer == 1) ? 0 : 1;
+            uiKeysLayer(keysLayer);
+            keysHeld = -1;    // the whole grid just redrew
+            break;
+        case KEY_SYM:
+            keysLayer = (keysLayer == 2) ? 0 : 2;
+            uiKeysLayer(keysLayer);
+            keysHeld = -1;
+            break;
+        case KEY_CANCEL:
+            memset(keysText, 0, sizeof(keysText));
+            keysLen = 0;
+            gotoScreen(SCREEN_WIFI);
+            break;
+        case KEY_OK:
+            joinNetwork(joinSsid, keysText);
+            break;
+        default:
+            if (code < 32 || code > 126 || keysLen >= sizeof(keysText) - 1) break;
+            keysText[keysLen++] = (char)code;
+            keysText[keysLen] = '\0';
+            uiKeysText(keysText);
+            // Shift is one-shot, like a phone keyboard.
+            if (keysLayer == 1) {
+                keysLayer = 0;
+                uiKeysLayer(keysLayer);
+                keysHeld = -1;
+            }
+            break;
+    }
 }
 
 static void fireDialKey(int key) {
@@ -425,9 +611,9 @@ static void pollTouchHome() {
         int btn = uiHitTest(sx, sy);
 
         if (calMode && heldBtn == BTN_NONE) {
-            static const char *NAMES[] = { "BANK-", "PREV", "NEXT", "BANK+", "PANIC", "VOLUME" };
+            static const char *NAMES[] = { "BANK-", "PREV", "NEXT", "BANK+", "PANIC", "VOLUME", "WIFI" };
             Serial.printf("#   -> zone %d (%s)\n", btn,
-                          (btn >= 0 && btn <= 5) ? NAMES[btn] : "none");
+                          (btn >= 0 && btn <= 6) ? NAMES[btn] : "none");
         }
 
         if (btn == BTN_VOLUME) {
@@ -593,8 +779,59 @@ static void pollTouchQuantize() {
     }
 }
 
+static void pollTouchWifi() {
+    int sx, sy;
+    bool down = readTouch(sx, sy);
+    uint32_t now = millis();
+
+    if (down) {
+        if (!wifiKeyHeld) {
+            int key = uiWifiHitTest(sx, sy, wifi.count);
+            if (key != WIFI_NONE) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                wifiKeyHeld = true;
+                lastFireMs = now;
+                wakeBacklight();
+                fireWifiKey(key);
+            }
+        }
+    } else {
+        wifiKeyHeld = false;
+    }
+}
+
+static void pollTouchKeys() {
+    int sx, sy;
+    bool down = readTouch(sx, sy);
+    uint32_t now = millis();
+
+    if (down) {
+        if (keysHeld < 0 && !wifiKeyHeld) {
+            int index = -1;
+            int code = uiKeysHitTest(sx, sy, &index);
+            if (code != KEY_NONE) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                lastFireMs = now;
+                wifiKeyHeld = true;
+                wakeBacklight();
+                keysHeld = index;
+                uiKeysPress(index, true);
+                fireKeysKey(code);
+            }
+        }
+    } else {
+        if (keysHeld >= 0 && screen == SCREEN_KEYS) uiKeysPress(keysHeld, false);
+        keysHeld = -1;
+        wifiKeyHeld = false;
+    }
+}
+
 static void pollTouch() {
-    if (screen == SCREEN_DIAL) {
+    if (screen == SCREEN_WIFI) {
+        pollTouchWifi();
+    } else if (screen == SCREEN_KEYS) {
+        pollTouchKeys();
+    } else if (screen == SCREEN_DIAL) {
         pollTouchDial();
     } else if (screen == SCREEN_LOOP) {
         pollTouchLoop();
@@ -643,6 +880,11 @@ void loop() {
     }
     if (!state.linked && now - lastHelloMs > HELLO_RETRY_MS) {
         sendHello();
+    }
+
+    if (wifiReturnAt && now >= wifiReturnAt) {
+        wifiReturnAt = 0;
+        if (screen == SCREEN_WIFI) gotoScreen(SCREEN_HOME);
     }
 
     // Idle dimming - this shares the Pi's battery, so it matters.

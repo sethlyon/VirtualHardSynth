@@ -1,0 +1,14 @@
+[Unit]
+Description=VHS-1 one-time software install (waits for a network)
+ConditionPathExists=!/var/lib/vhs/provisioned
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/vhs/VirtualHardSynth/setup/provision.sh
+TimeoutStartSec=infinity
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

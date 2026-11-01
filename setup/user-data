@@ -1,0 +1,17 @@
+#cloud-config
+# VHS-1 first boot. prepare-card.ps1 fills in the SSH key and writes this
+# to the card's boot partition.
+hostname: vhs
+manage_etc_hosts: true
+users:
+  - name: vhs
+    groups: [users, adm, dialout, audio, netdev, video, plugdev, input, gpio, spi, i2c, render, sudo]
+    shell: /bin/bash
+    lock_passwd: true
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - __SSH_KEY__
+ssh_pwauth: false
+enable_ssh: true
+runcmd:
+  - [bash, /boot/firmware/vhs/VirtualHardSynth/setup/firstboot.sh]

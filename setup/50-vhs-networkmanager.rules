@@ -1,0 +1,9 @@
+// patchbridge runs as vhs with no login session, which NetworkManager's
+// default policy won't let scan or connect. The panel's Wi-Fi picker needs
+// both.
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") == 0 &&
+        subject.user == "vhs") {
+        return polkit.Result.YES;
+    }
+});

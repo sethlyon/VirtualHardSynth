@@ -38,6 +38,7 @@ from pathlib import Path
 import serial
 
 import sf2
+import wifi
 
 log = logging.getLogger("patchbridge")
 
@@ -1139,6 +1140,10 @@ class Bridge:
         self.ser = serial.Serial(args.port, args.baud, timeout=0.2)
         time.sleep(0.3)
 
+        # Scans/joins run on a worker thread, which mustn't touch self.ser -
+        # its frames go through the event queue to the main loop instead.
+        self.wifi = wifi.WifiPanel(lambda obj: self.events.put(("tx", obj)))
+
     def _setup_drum_kit(self):
         """Pin channel 9 to FluidR3_GM's GM drum kit so the metronome (and
         any future percussion use) clicks reliably no matter what soundfont
@@ -1373,7 +1378,15 @@ class Bridge:
             "can_undo": can_undo,
             "can_redo": can_redo,
             "bars": bars,
+            "wifi": self.wifi.bars,
         })
+
+    def wifi_status_changed(self):
+        """Re-read the Wi-Fi signal for the status-bar icon; push if it moved."""
+        old = self.wifi.bars
+        self.wifi.refresh()
+        if self.wifi.bars != old:
+            self.push_state()
 
     # -- local control channel (web UI) --------------------------------------
 
@@ -1452,7 +1465,10 @@ class Bridge:
             except queue.Empty:
                 kind, payload = None, None
 
-            if kind == "rx":
+            if kind == "rx" and self.wifi.handle(payload):
+                pass
+
+            elif kind == "rx":
                 t = payload.get("t")
                 if t == "hello":
                     log.info("CYD connected, fw=%s", payload.get("fw"))
@@ -1520,6 +1536,11 @@ class Bridge:
                 note, on, vel = payload
                 self.looper.record_event(note, on, vel)
 
+            elif kind == "tx":
+                self.send(payload)
+                if payload.get("st") == "ok":
+                    self.wifi_status_changed()
+
             elif kind == "looper_changed":
                 # Count-in finished on its own background thread and flipped
                 # state to "recording" - it can't touch self.ser itself, so
@@ -1545,6 +1566,7 @@ class Bridge:
                 if new != self.batt:
                     self.batt = new
                     self.push_state()
+                self.wifi_status_changed()
 
             if now - last_hb > HEARTBEAT_S:
                 last_hb = now
@@ -1561,7 +1583,8 @@ class Bridge:
 def main():
     ap = argparse.ArgumentParser(
         description="FluidSynth to CYD patch display bridge")
-    ap.add_argument("--port", default="/dev/ttyUSB0", help="CYD serial port")
+    ap.add_argument("--port", default="/dev/serial0",
+                    help="CYD serial port (GPIO UART; /dev/ttyUSB0 if on USB)")
     ap.add_argument("--baud", type=int, default=115200)
     ap.add_argument("--patches",
                     default=str(Path(__file__).resolve().parents[2] / "synth" / "patches.json"),

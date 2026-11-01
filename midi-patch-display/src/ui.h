@@ -27,6 +27,7 @@ struct PatchState {
     bool  canUndo = false;
     bool  canRedo = false;
     char  bars[6] = "auto";        // auto, 1, 2, 4, 8 - fixed base-recording length
+    int   wifi = -1;               // 0-4 signal bars, -1 = not on Wi-Fi
 };
 
 enum ButtonId {
@@ -36,7 +37,8 @@ enum ButtonId {
     BTN_NEXT    = 2,
     BTN_BANK_UP = 3,
     BTN_PANIC   = 4,    // small status-bar button
-    BTN_VOLUME  = 5     // slider strip, above the buttons
+    BTN_VOLUME  = 5,    // slider strip, above the buttons
+    BTN_WIFI    = 6     // soundfont name / Wi-Fi icon in the status bar
 };
 
 // ---------------------------------------------------------------------------
@@ -133,3 +135,61 @@ enum QuantKey {
 void uiQuantBegin();
 void uiQuantRender(const PatchState &s, bool force);
 int  uiQuantHitTest(int x, int y);
+
+// ---------------------------------------------------------------------------
+// Wi-Fi picker - reached by tapping the soundfont name in the home screen's
+// status bar, or opened by the Pi itself (a "prompt" frame) when it has no
+// network on first boot. Full screen, no nav bar: BACK returns home. The
+// list and all the connecting happen on the Pi (NetworkManager); this side
+// only shows what "wifi" frames say and sends back the choice.
+// ---------------------------------------------------------------------------
+
+#define WIFI_MAX_NETS 6
+
+struct WifiNet {
+    char ssid[33];
+    int  bars;          // 0-4
+    bool locked;        // needs a password
+    bool current;       // the network the Pi is on now
+};
+
+struct WifiView {
+    WifiNet nets[WIFI_MAX_NETS];
+    int     count = 0;
+    char    status[44] = "";
+    int     level = 0;      // 0 = info, 1 = good, 2 = bad
+    bool    busy = false;   // scanning/joining - shown in place of an empty list
+};
+
+enum WifiKey {
+    WIFI_NONE   = -1,
+    // 0..WIFI_MAX_NETS-1 are list rows
+    WIFI_BACK   = 10,
+    WIFI_RESCAN = 11,
+};
+
+void uiWifiRender(const WifiView &w);
+int  uiWifiHitTest(int x, int y, int count);
+
+// ---------------------------------------------------------------------------
+// Keyboard - password entry for a locked network. Three layers (lower,
+// upper, symbols) of a 10x4 grid plus CANCEL / space / JOIN. Keys are
+// identified by index (0-39 grid, 40-42 bottom row) for press feedback;
+// uiKeysHitTest() also returns what the key means.
+// ---------------------------------------------------------------------------
+
+enum KeyCode {
+    KEY_NONE   = 0,
+    KEY_SHIFT  = 1,
+    KEY_SYM    = 2,
+    KEY_CANCEL = 3,
+    KEY_OK     = 4,
+    KEY_BKSP   = 8,
+    // anything else is the printable character itself
+};
+
+void uiKeysBegin(const char *ssid, int layer);
+void uiKeysLayer(int layer);           // 0 = lower, 1 = upper, 2 = symbols
+void uiKeysText(const char *text);
+void uiKeysPress(int index, bool down);
+int  uiKeysHitTest(int x, int y, int *index);

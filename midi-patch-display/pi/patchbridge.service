@@ -13,7 +13,7 @@ WorkingDirectory=/home/vhs/VirtualHardSynth/midi-patch-display/pi
 # don't rely on a failed first attempt + Restart= to paper over the race.
 ExecStartPre=/bin/bash -c 'for i in $(seq 1 50); do (exec 3<>/dev/tcp/127.0.0.1/9800) 2>/dev/null && exec 3<&- && exit 0; sleep 0.2; done; exit 1'
 ExecStart=/usr/bin/python3 /home/vhs/VirtualHardSynth/midi-patch-display/pi/bridge.py \
-    --port /dev/midi-panel \
+    --port /dev/serial0 \
     --midi-in "" \
     --battery ina219
 Restart=always

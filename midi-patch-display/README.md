@@ -1,17 +1,32 @@
 # midi-patch-display
 
-Front panel for a headless FluidSynth rig. A CYD (ESP32-2432S028R) hangs off one
-USB port of the Raspberry Pi and shows what is playing.
+Front panel for a headless FluidSynth rig. A CYD (ESP32-2432S028R) is wired to
+the Raspberry Pi's GPIO UART and shows what is playing.
 
 ```
 MIDI keyboard --USB/DIN--> Pi 4 --> FluidSynth --> audio HAT --> speakers
                             |
                        bridge.py
                             |
-                     USB serial (JSON lines)
+                   GPIO UART (JSON lines)
                             |
                           CYD
 ```
+
+### Wiring
+
+The CYD's 4-pin UART connector goes to the Pi header (outer row, from the end
+away from the USB/Ethernet ports):
+
+| CYD | Wire | Pi pin |
+|-----|------|--------|
+| 5V  | red    | 2 (5V) |
+| GND | black  | 6 (GND) |
+| RXD | green  | 8 (GPIO14 / TXD) |
+| TXD | yellow | 10 (GPIO15 / RXD) |
+
+That connector shares the ESP32's UART0 with the CH340, so unplug it (or keep
+the Pi off) while flashing over USB.
 
 ```
 +----------------------------------------------+
@@ -74,7 +89,7 @@ serial link before FluidSynth is in the picture.
 sudo apt install python3-rtmidi        # or let pip build it
 pip install -r pi/requirements.txt
 
-python3 pi/bridge.py --port /dev/ttyUSB0 --midi-in "Yamaha" --battery ina219 -v
+python3 pi/bridge.py --port /dev/serial0 --midi-in "Yamaha" --battery ina219 -v
 ```
 
 Useful flags:
@@ -106,9 +121,23 @@ reconfiguration, but it can only drive whichever single soundfont FluidSynth
 was already started with - it can't load additional ones from `patches.json`
 on the fly, since that needs the command socket's `load` command.
 
-### Stable device name
+### Enabling the GPIO UART
 
-The CH340 has no unique serial number, so Linux assigns `/dev/ttyUSB*` in plug
+`/dev/serial0` only appears once the UART is on and the login console is off it:
+
+```bash
+sudo raspi-config nonint do_serial_cons 1   # no login shell on serial
+sudo raspi-config nonint do_serial_hw 0     # hardware port on
+echo -e "enable_uart=1\ndtoverlay=disable-bt" | sudo tee -a /boot/firmware/config.txt
+sudo reboot
+```
+
+`disable-bt` moves the full PL011 UART onto GPIO14/15 so the baud rate doesn't
+drift with the core clock. It turns Bluetooth off.
+
+### Stable device name (USB only)
+
+If you run the CYD off USB instead, the CH340 has no unique serial number, so Linux assigns `/dev/ttyUSB*` in plug
 order and Windows assigns a COM number per physical USB port. Install the udev
 rule so the bridge always finds the panel:
 
@@ -117,7 +146,7 @@ sudo cp pi/99-midi-panel.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-That gives you `/dev/midi-panel`, which the systemd unit already uses.
+That gives you `/dev/midi-panel`; point the systemd unit's `--port` at it.
 
 ### Install as a service
 

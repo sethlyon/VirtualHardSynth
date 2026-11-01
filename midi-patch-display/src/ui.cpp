@@ -101,6 +101,25 @@
 #define QUANT_CELL_H     (QUANT_GRID_H / QUANT_ROWS)
 #define QUANT_OPT_COUNT  7
 
+// Status bar, left side: Wi-Fi icon, then the soundfont name. Both are one
+// tap target that opens the Wi-Fi picker.
+#define WIFI_ICON_X    6
+#define SF_TEXT_X      28
+
+// Wi-Fi picker
+#define WIFI_ROW_Y     (BAR_H + 2)
+#define WIFI_ROW_H     30
+#define WIFI_BTN_Y     (WIFI_ROW_Y + WIFI_MAX_NETS * WIFI_ROW_H + 2)
+#define WIFI_BTN_H     (SCR_H - WIFI_BTN_Y)
+
+// Keyboard
+#define KEYS_FIELD_Y   (BAR_H + 4)
+#define KEYS_FIELD_H   28
+#define KEYS_Y         (KEYS_FIELD_Y + KEYS_FIELD_H + 4)
+#define KEYS_ROW_H     ((SCR_H - KEYS_Y) / 5)
+#define KEYS_KEY_W     (SCR_W / 10)
+#define KEYS_EMPTY     5     // grid slot with no key in this layer
+
 static TFT_eSPI  *g = nullptr;
 static PatchState prev;
 static bool       primed = false;
@@ -169,6 +188,17 @@ static void drawButton(int i, bool down) {
     g->drawString(BTN_LABEL[i], x + BTN_W / 2, BTN_Y + BTN_H / 2, 2);
 }
 
+// Four rising bars, bottom-left at (x, yBase). bars < 0 means no Wi-Fi: the
+// outline stays, crossed through in red.
+static void drawWifiIcon(int x, int yBase, int bars, uint16_t bg) {
+    g->fillRect(x, yBase - 12, 16, 13, bg);
+    for (int i = 0; i < 4; i++) {
+        int h = 3 + i * 3;
+        g->fillRect(x + i * 4, yBase - h, 3, h, (i < bars) ? C_TEXT : C_LINE);
+    }
+    if (bars < 0) g->drawLine(x, yBase - 12, x + 15, yBase, C_BAD);
+}
+
 static void drawBatteryIcon(int x, int y, int pct) {
     // 22x11 body with a 2px nub on the right
     g->drawRect(x, y, 22, 11, C_DIM);
@@ -203,12 +233,15 @@ static void renderBar(const PatchState &s, bool force) {
                       PANIC_BTN_Y + PANIC_BTN_H / 2, 1);
     }
 
+    if (force || s.wifi != prev.wifi) {
+        drawWifiIcon(WIFI_ICON_X, BAR_H / 2 + 6, s.wifi, C_BAR);
+    }
     if (sfChanged || linkChanged) {
         g->setTextDatum(ML_DATUM);
         g->setTextColor(s.linked ? C_DIM : C_BAD, C_BAR);
-        g->setTextPadding(200);
+        g->setTextPadding(PANIC_BTN_X - SF_TEXT_X - 4);
         g->drawString(s.linked ? (s.sf[0] ? s.sf : "no soundfont") : "LINK DOWN",
-                      6, BAR_H / 2, 2);
+                      SF_TEXT_X, BAR_H / 2, 2);
     }
     if (battChanged || force) {
         drawBatteryIcon(SCR_W - 30, (BAR_H - 11) / 2, s.batt);
@@ -341,6 +374,7 @@ int uiHitTest(int x, int y) {
     if (y >= SLIDER_HIT_Y0) return BTN_VOLUME;
     if (y < BAR_H) {
         if (x >= PANIC_BTN_X && x < PANIC_BTN_X + PANIC_BTN_W) return BTN_PANIC;
+        if (x < PANIC_BTN_X - 4) return BTN_WIFI;
         return BTN_NONE;
     }
     return BTN_NONE;   // nav bar and the name/bank display - no tap action here
@@ -681,4 +715,203 @@ int uiQuantHitTest(int x, int y) {
     if (col < 0 || col >= QUANT_COLS || row < 0 || row >= QUANT_ROWS) return QUANT_NONE;
     int key = row * QUANT_COLS + col;
     return key < QUANT_OPT_COUNT ? key : QUANT_NONE;
+}
+
+// ---------------------------------------------------------------------------
+// Shared full-screen chrome for the Wi-Fi picker and keyboard
+// ---------------------------------------------------------------------------
+
+static void drawKey(int x, int y, int w, int h, const char *label, bool down) {
+    uint16_t bg = down ? C_BTN_DN : C_BTN;
+    g->fillRoundRect(x + 2, y + 2, w - 4, h - 4, 5, bg);
+    g->drawRoundRect(x + 2, y + 2, w - 4, h - 4, 5, C_LINE);
+    g->setTextDatum(MC_DATUM);
+    g->setTextColor(down ? C_BG : C_TEXT, bg);
+    g->setTextPadding(0);
+    g->drawString(label, x + w / 2, y + h / 2, 2);
+}
+
+static void drawHeader(const char *title, const char *right, uint16_t rightColor) {
+    g->fillRect(0, 0, SCR_W, BAR_H, C_BAR);
+    g->drawFastHLine(0, BAR_H, SCR_W, C_LINE);
+    g->setTextPadding(0);
+    g->setTextDatum(ML_DATUM);
+    g->setTextColor(C_TEXT, C_BAR);
+    g->drawString(title, 6, BAR_H / 2, 2);
+    if (right && right[0]) {
+        g->setTextDatum(MR_DATUM);
+        g->setTextColor(rightColor, C_BAR);
+        g->drawString(right, SCR_W - 6, BAR_H / 2, 2);
+    }
+    primed = false;   // home needs a full repaint on the way back
+}
+
+// Longest prefix of s that fits in maxW pixels at font 2, written to out.
+static void fitText(const char *s, int maxW, char *out, size_t outLen) {
+    strncpy(out, s, outLen - 1);
+    out[outLen - 1] = '\0';
+    size_t n = strlen(out);
+    while (n > 0 && g->textWidth(out, 2) > maxW) out[--n] = '\0';
+}
+
+// ---------------------------------------------------------------------------
+// Wi-Fi picker
+// ---------------------------------------------------------------------------
+
+static void drawLock(int x, int y, uint16_t c) {
+    g->drawRoundRect(x + 1, y, 6, 7, 3, c);
+    g->fillRect(x, y + 4, 8, 6, c);
+}
+
+void uiWifiRender(const WifiView &w) {
+    if (!g) return;
+    uint16_t sc = w.level == 1 ? C_OK : (w.level == 2 ? C_BAD : C_DIM);
+    char status[44];
+    fitText(w.status, SCR_W - 70, status, sizeof(status));
+    drawHeader("Wi-Fi", status, sc);
+
+    g->fillRect(0, BAR_H + 1, SCR_W, WIFI_BTN_Y - BAR_H - 1, C_BG);
+    if (w.count == 0) {
+        g->setTextDatum(MC_DATUM);
+        g->setTextColor(C_DIM, C_BG);
+        g->drawString(w.busy ? "looking for networks..." : "no networks found",
+                      SCR_W / 2, (WIFI_ROW_Y + WIFI_BTN_Y) / 2, 2);
+    }
+    for (int i = 0; i < w.count && i < WIFI_MAX_NETS; i++) {
+        const WifiNet &n = w.nets[i];
+        int y = WIFI_ROW_Y + i * WIFI_ROW_H;
+        g->fillRoundRect(3, y + 1, SCR_W - 6, WIFI_ROW_H - 2, 4, C_BTN);
+        if (n.current) g->drawRoundRect(3, y + 1, SCR_W - 6, WIFI_ROW_H - 2, 4, C_OK);
+
+        char ssid[33];
+        fitText(n.ssid, SCR_W - 60, ssid, sizeof(ssid));
+        g->setTextDatum(ML_DATUM);
+        g->setTextColor(n.current ? C_OK : C_TEXT, C_BTN);
+        g->drawString(ssid, 10, y + WIFI_ROW_H / 2, 2);
+
+        if (n.locked) drawLock(SCR_W - 44, y + 9, C_DIM);
+        drawWifiIcon(SCR_W - 26, y + WIFI_ROW_H / 2 + 6, n.bars, C_BTN);
+    }
+
+    g->fillRect(0, WIFI_BTN_Y, SCR_W, WIFI_BTN_H, C_BG);
+    drawKey(0, WIFI_BTN_Y, SCR_W / 2, WIFI_BTN_H, "BACK", false);
+    drawKey(SCR_W / 2, WIFI_BTN_Y, SCR_W / 2, WIFI_BTN_H, w.busy ? "..." : "RESCAN", false);
+}
+
+int uiWifiHitTest(int x, int y, int count) {
+    if (x < 0 || x >= SCR_W || y < WIFI_ROW_Y || y >= SCR_H) return WIFI_NONE;
+    if (y >= WIFI_BTN_Y) return x < SCR_W / 2 ? WIFI_BACK : WIFI_RESCAN;
+    int row = (y - WIFI_ROW_Y) / WIFI_ROW_H;
+    return row < count ? row : WIFI_NONE;
+}
+
+// ---------------------------------------------------------------------------
+// Keyboard
+// ---------------------------------------------------------------------------
+
+// \x05 (KEYS_EMPTY) leaves a slot blank. Careful adding to these: a \x escape
+// swallows any hex digits that follow it.
+static const char *KEYS_ROWS[3][4] = {
+    { "1234567890", "qwertyuiop", "asdfghjkl\b", "\x01zxcvbnm.\x02" },
+    { "1234567890", "QWERTYUIOP", "ASDFGHJKL\b", "\x01ZXCVBNM-\x02" },
+    { "!@#$%^&*()", "-_=+[]{}\|", ";:'\",.<>/\b", "\x05`~?*#@!_\x02" },
+};
+
+static int keysLayer = 0;
+
+static void keysRect(int index, int &x, int &y, int &w, int &h) {
+    h = KEYS_ROW_H;
+    if (index < 40) {
+        x = (index % 10) * KEYS_KEY_W;
+        y = KEYS_Y + (index / 10) * KEYS_ROW_H;
+        w = KEYS_KEY_W;
+        return;
+    }
+    // CANCEL (3 keys wide), space (4), JOIN (3)
+    static const int XS[3] = { 0, 3, 7 }, WS[3] = { 3, 4, 3 };
+    x = XS[index - 40] * KEYS_KEY_W;
+    y = KEYS_Y + 4 * KEYS_ROW_H;
+    w = WS[index - 40] * KEYS_KEY_W;
+}
+
+static char keysCharAt(int index) {
+    return KEYS_ROWS[keysLayer][index / 10][index % 10];
+}
+
+static void keysDraw(int index, bool down) {
+    int x, y, w, h;
+    keysRect(index, x, y, w, h);
+    char one[2] = { 0, 0 };
+    const char *label = one;
+    if (index >= 40) {
+        static const char *BOTTOM[3] = { "CANCEL", "space", "JOIN" };
+        label = BOTTOM[index - 40];
+    } else {
+        char c = keysCharAt(index);
+        if (c == KEYS_EMPTY) { g->fillRect(x, y, w, h, C_BG); return; }
+        if (c == KEY_BKSP)       label = "DEL";
+        else if (c == KEY_SHIFT) { label = "Aa"; down = down || keysLayer == 1; }
+        else if (c == KEY_SYM)   label = keysLayer == 2 ? "abc" : "#+=";
+        else                     one[0] = c;
+    }
+    drawKey(x, y, w, h, label, down);
+}
+
+void uiKeysBegin(const char *ssid, int layer) {
+    if (!g) return;
+    g->fillScreen(C_BG);
+    char title[48];
+    snprintf(title, sizeof(title), "Password for %s", ssid);
+    char fitted[48];
+    fitText(title, SCR_W - 12, fitted, sizeof(fitted));
+    drawHeader(fitted, nullptr, C_DIM);
+    uiKeysText("");
+    keysLayer = -1;
+    uiKeysLayer(layer);
+    for (int i = 40; i < 43; i++) keysDraw(i, false);
+}
+
+void uiKeysLayer(int layer) {
+    if (!g || layer == keysLayer) return;
+    keysLayer = layer;
+    for (int i = 0; i < 40; i++) keysDraw(i, false);
+}
+
+void uiKeysText(const char *text) {
+    if (!g) return;
+    g->fillRoundRect(4, KEYS_FIELD_Y, SCR_W - 8, KEYS_FIELD_H, 4, C_BAR);
+    g->drawRoundRect(4, KEYS_FIELD_Y, SCR_W - 8, KEYS_FIELD_H, 4, C_LINE);
+    // Show the tail when the password outgrows the field.
+    int maxW = SCR_W - 30;
+    while (*text && g->textWidth(text, 2) > maxW) text++;
+    g->setTextDatum(ML_DATUM);
+    g->setTextColor(C_TEXT, C_BAR);
+    g->setTextPadding(0);
+    g->drawString(text, 10, KEYS_FIELD_Y + KEYS_FIELD_H / 2, 2);
+    int cx = 10 + g->textWidth(text, 2) + 1;
+    g->drawFastVLine(cx, KEYS_FIELD_Y + 6, KEYS_FIELD_H - 12, C_ACCENT);
+}
+
+void uiKeysPress(int index, bool down) {
+    if (!g || index < 0 || index > 42) return;
+    keysDraw(index, down);
+}
+
+int uiKeysHitTest(int x, int y, int *index) {
+    if (x < 0 || x >= SCR_W || y < KEYS_Y || y >= SCR_H) return KEY_NONE;
+    int row = (y - KEYS_Y) / KEYS_ROW_H;
+    if (row > 4) row = 4;
+    if (row < 4) {
+        int col = x / KEYS_KEY_W;
+        if (col > 9) col = 9;
+        int i = row * 10 + col;
+        char c = keysCharAt(i);
+        if (c == KEYS_EMPTY) return KEY_NONE;
+        *index = i;
+        return (unsigned char)c;
+    }
+    int col = x / KEYS_KEY_W;
+    int i = col < 3 ? 40 : (col < 7 ? 41 : 42);
+    *index = i;
+    return i == 40 ? KEY_CANCEL : (i == 41 ? ' ' : KEY_OK);
 }

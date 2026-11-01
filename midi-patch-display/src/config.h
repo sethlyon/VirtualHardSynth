@@ -21,7 +21,7 @@
 
 // 1 = landscape, 3 = landscape rotated 180. The stock demo booted as
 // LANDSCAPE_INVERTED, so flip to 3 if yours comes up upside down.
-#define SCREEN_ROTATION  1
+#define SCREEN_ROTATION  3   // board sits USB-toward-the-case-slot in the VHS-1 faceplate
 
 // ---------------------------------------------------------------------------
 // Touch calibration
@@ -52,7 +52,7 @@
 // Link + power
 // ---------------------------------------------------------------------------
 #define SERIAL_BAUD         115200
-#define FW_VERSION          "1.0.0"
+#define FW_VERSION          "1.1.0"
 
 // No state frame from the Pi for this long -> treat the link as down.
 #define LINK_TIMEOUT_MS     6000UL
