@@ -18,6 +18,10 @@ touchscreen.
 
 .EXAMPLE
 pwsh setup/prepare-card.ps1 -Boot G:\
+
+.EXAMPLE
+# No drive letter assigned: use the volume path from Get-Volume
+pwsh setup/prepare-card.ps1 -Boot '\\?\Volume{4acfd0a7-...}\'
 #>
 param(
     [Parameter(Mandatory)] [string] $Boot,
@@ -32,7 +36,9 @@ function Write-Lf([string] $path, [string] $text) {
 }
 
 foreach ($f in 'config.txt', 'cmdline.txt') {
-    if (-not (Test-Path (Join-Path $Boot $f))) {
+    # -LiteralPath throughout: a partition Windows didn't give a letter is
+    # reached as \\?\Volume{...}\, and plain -Path reads that ? as a wildcard.
+    if (-not (Test-Path -LiteralPath (Join-Path $Boot $f))) {
         throw "$f not found on $Boot - is this a freshly imaged Raspberry Pi OS boot partition?"
     }
 }
@@ -74,7 +80,7 @@ $key = (Get-Content $SshKey -Raw).Trim()
 $ud = (Get-Content (Join-Path $PSScriptRoot 'user-data') -Raw).Replace('__SSH_KEY__', $key)
 Write-Lf (Join-Path $Boot 'user-data') $ud
 $sshFlag = Join-Path $Boot 'ssh'
-if (-not (Test-Path $sshFlag)) { New-Item -ItemType File $sshFlag | Out-Null }
+if (-not (Test-Path -LiteralPath $sshFlag)) { [IO.File]::WriteAllText($sshFlag, '') }
 
 # The repo, as a real clone so the Pi can git pull later
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("vhs-card-" + [guid]::NewGuid())
@@ -82,9 +88,13 @@ git -c core.autocrlf=false clone --quiet --no-hardlinks $repo $tmp
 if ($LASTEXITCODE) { throw "git clone failed" }
 git -C $tmp config core.fileMode false
 git -C $tmp remote set-url origin (git -C $repo remote get-url origin)
-$dest = Join-Path $Boot 'vhs\VirtualHardSynth'
-robocopy $tmp $dest /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
-if ($LASTEXITCODE -ge 8) { throw "copy to $dest failed (robocopy $LASTEXITCODE)" }
-Remove-Item -Recurse -Force $tmp
+# Copy-Item rather than robocopy: robocopy can't create folders under a
+# \\?\Volume{...}\ path and just retries forever.
+$vhsDir = Join-Path $Boot 'vhs'
+$dest = Join-Path $vhsDir 'VirtualHardSynth'
+if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force }
+[IO.Directory]::CreateDirectory($vhsDir) | Out-Null
+Copy-Item -LiteralPath $tmp -Destination $dest -Recurse -Force
+Remove-Item -LiteralPath $tmp -Recurse -Force
 
 Write-Host "Card ready: $(git -C $repo log -1 --format='%h %s')"
