@@ -15,8 +15,8 @@ the decisions already taken.
 
 | Directory | What it is | State |
 |-----------|-----------|-------|
-| [`midi-patch-display/`](midi-patch-display/) | ESP32 CYD touchscreen front panel plus the host-side bridge daemon | Firmware working, bridge untested against a live synth |
-| [`synth/`](synth/) | The Pi MIDI host and sound engine | Being rebuilt from scratch, see [`synth/IDEA.md`](synth/IDEA.md) |
+| [`midi-patch-display/`](midi-patch-display/) | ESP32 CYD touchscreen front panel plus the host-side bridge daemon | Working end to end: patches, volume, battery, MIDI-present indicator all live |
+| [`synth/`](synth/) | The Pi MIDI host, FluidSynth engine, and the patch-table web UI | Running as systemd services; web UI (`webui.py`) built and tested, not yet deployed to the Pi |
 
 ```
 MIDI keyboard --USB/DIN--> Pi --> sound engine --> audio HAT --> speakers
@@ -52,6 +52,13 @@ Protocol is documented in [`midi-patch-display/README.md`](midi-patch-display/RE
 
 ## Status
 
-The panel half works: firmware builds, flashes, renders, and its touch buttons
-emit the right commands over a verified serial link. The synth half is a
-rebuild in progress. See each component's `IDEA.md` for detail.
+The rig works: a Pi 4 with a Waveshare WM8960 HAT runs FluidSynth and the
+panel bridge as systemd services that survive a reboot, the CYD shows real
+patch data and a working volume slider, and a MIDI keyboard plays through it
+at real volume. Bank/program slots are no longer tied to whatever order one
+`.sf2` file happens to list its presets in - a patch table
+(`synth/patches.json`) maps each slot to any preset in any loaded soundfont,
+editable through a browser UI that can also pull new soundfonts in from a
+URL. See [HANDOFF.md](HANDOFF.md) for exactly what's verified versus still
+rough (touch input lag, and the panel not reconnecting on its own after a
+physical unplug, are the two known gaps).

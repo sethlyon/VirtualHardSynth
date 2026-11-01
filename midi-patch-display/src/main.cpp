@@ -7,11 +7,36 @@
 //
 // Protocol: newline-delimited JSON, both directions.
 //   Pi  -> CYD  {"t":"state","bank":0,"prog":4,"name":"Rhodes","sf":"FluidR3",
-//                "batt":78,"midi":true}
+//                "batt":78,"vol":80,"index":12,"count":189,
+//                "banks":[0,8,9,16,128],"midi":true,
+//                "loop_state":"empty","loop_len":0,"metro_on":false,
+//                "quantize":"off","can_undo":false,"can_redo":false,
+//                "bars":"auto"}
 //   Pi  -> CYD  {"t":"act"}                       MIDI activity blink
 //   Pi  -> CYD  {"t":"toast","msg":"PANIC"}
 //   CYD -> Pi   {"t":"hello","fw":"1.0.0"}
 //   CYD -> Pi   {"t":"cmd","action":"patch_next"}
+//   CYD -> Pi   {"t":"cmd","action":"volume_set","value":80}
+//   CYD -> Pi   {"t":"cmd","action":"patch_select","bank":0,"prog":42}
+//   CYD -> Pi   {"t":"cmd","action":"loop_record"}   toggles record/overdub
+//   CYD -> Pi   {"t":"cmd","action":"loop_play"}     toggles play/stop
+//   CYD -> Pi   {"t":"cmd","action":"loop_undo"}     step back one pass
+//   CYD -> Pi   {"t":"cmd","action":"loop_redo"}     step forward one pass
+//   CYD -> Pi   {"t":"cmd","action":"loop_clear"}    full wipe, long-press only
+//   CYD -> Pi   {"t":"cmd","action":"metronome_toggle"}
+//   CYD -> Pi   {"t":"cmd","action":"quantize_set","grid":"1/16"}
+//   CYD -> Pi   {"t":"cmd","action":"loop_bars_set","bars":"4"}  or "auto"
+//
+// Four screens - home, dial, loop, quantize - reached from a nav bar at the
+// top of every screen (HOME/DIAL/LOOP/QNT), not by swiping. Dial: banks
+// (from "banks") listed down the left, a 10-key + program display on the
+// right. Loop: REC/PLAY, a small MET toggle and BARS cycler, and an
+// UNDO/REDO split button for the single-track MIDI looper that actually
+// lives in bridge.py (this panel never sees raw note data, just
+// loop_state/loop_len/can_undo/can_redo/bars) - short-tap either half of
+// the split button to step, hold it to fully clear instead. Quantize: the
+// same grid options the web UI's drawer offers. "index"/"count" aren't
+// used yet but are cheap to keep around for a future "N of M" readout.
 // ---------------------------------------------------------------------------
 
 #include <Arduino.h>
@@ -41,6 +66,30 @@ static bool     calMode = false;
 static int      heldBtn      = BTN_NONE;
 static uint32_t heldSinceMs  = 0;
 static uint32_t lastFireMs   = 0;
+static uint32_t lastVolSendMs = 0;
+
+// screens - order matches ui.cpp's NAV_LABEL[] (HOME/DIAL/LOOP/QNT)
+enum Screen { SCREEN_HOME, SCREEN_DIAL, SCREEN_LOOP, SCREEN_QUANTIZE };
+static Screen   screen = SCREEN_HOME;
+
+// dial screen
+static int      dialPage = 0;
+static int      dialBank = 0;
+static char     dialProgBuf[4] = "";
+static bool     dialKeyHeld = false;
+
+// loop screen
+static bool     loopKeyHeld = false;
+// UNDO/REDO split button: tracked separately from loopKeyHeld because,
+// unlike every other key here, it has to keep sampling every frame while
+// held to detect a long-press (see LOOP_CLR_HOLD_MS).
+static bool     clrPressActive = false;
+static bool     clrPressIsRedo = false;
+static uint32_t clrPressStartMs = 0;
+static bool     clrLongFired = false;
+
+// quantize screen
+static bool     quantKeyHeld = false;
 
 // ---------------------------------------------------------------------------
 
@@ -60,6 +109,43 @@ static void sendCmd(const char *action) {
     JsonDocument d;
     d["t"] = "cmd";
     d["action"] = action;
+    serializeJson(d, Serial);
+    Serial.println();
+}
+
+static void sendVolumeCmd(int pct) {
+    JsonDocument d;
+    d["t"] = "cmd";
+    d["action"] = "volume_set";
+    d["value"] = pct;
+    serializeJson(d, Serial);
+    Serial.println();
+}
+
+static void sendPatchSelectCmd(int bank, int prog) {
+    JsonDocument d;
+    d["t"] = "cmd";
+    d["action"] = "patch_select";
+    d["bank"] = bank;
+    d["prog"] = prog;
+    serializeJson(d, Serial);
+    Serial.println();
+}
+
+static void sendQuantizeCmd(const char *grid) {
+    JsonDocument d;
+    d["t"] = "cmd";
+    d["action"] = "quantize_set";
+    d["grid"] = grid;
+    serializeJson(d, Serial);
+    Serial.println();
+}
+
+static void sendBarsCmd(const char *bars) {
+    JsonDocument d;
+    d["t"] = "cmd";
+    d["action"] = "loop_bars_set";
+    d["bars"] = bars;
     serializeJson(d, Serial);
     Serial.println();
 }
@@ -86,7 +172,26 @@ static void handleLine(const char *line) {
         state.bank = d["bank"] | -1;
         state.prog = d["prog"] | -1;
         state.batt = d["batt"] | -1;
+        state.vol  = d["vol"] | -1;
+        state.index = d["index"] | -1;
+        state.count = d["count"] | -1;
         state.midi = d["midi"] | false;
+        JsonArray banksArr = d["banks"];
+        state.bankCount = 0;
+        for (JsonVariant v : banksArr) {
+            if (state.bankCount >= MAX_BANKS) break;
+            state.banks[state.bankCount++] = v.as<int>();
+        }
+        strncpy(state.loopState, d["loop_state"] | "empty", sizeof(state.loopState) - 1);
+        state.loopState[sizeof(state.loopState) - 1] = '\0';
+        state.loopLen = d["loop_len"] | 0.0f;
+        state.metroOn = d["metro_on"] | false;
+        strncpy(state.quantize, d["quantize"] | "off", sizeof(state.quantize) - 1);
+        state.quantize[sizeof(state.quantize) - 1] = '\0';
+        state.canUndo = d["can_undo"] | false;
+        state.canRedo = d["can_redo"] | false;
+        strncpy(state.bars, d["bars"] | "auto", sizeof(state.bars) - 1);
+        state.bars[sizeof(state.bars) - 1] = '\0';
         strncpy(state.name, d["name"] | "", sizeof(state.name) - 1);
         state.name[sizeof(state.name) - 1] = '\0';
         strncpy(state.sf, d["sf"] | "", sizeof(state.sf) - 1);
@@ -95,14 +200,22 @@ static void handleLine(const char *line) {
         lastStateMs = millis();
         // A patch change from the keyboard should light the screen back up.
         if (state.bank != oldBank || state.prog != oldProg) wakeBacklight();
-        uiRender(state, false);
+        // The data above always applies regardless of which screen is up,
+        // so patches.json edits etc. are ready the moment the user switches
+        // to dial. The loop and quantize screens are the exception:
+        // loop_state/loop_len/metro_on/quantize/bars are exactly what they
+        // exist to show live, so they redraw on every state frame the same
+        // as home does.
+        if (screen == SCREEN_HOME) uiRender(state, false);
+        else if (screen == SCREEN_LOOP) uiLoopRender(state, false);
+        else if (screen == SCREEN_QUANTIZE) uiQuantRender(state, false);
     }
     else if (!strcmp(t, "act")) {
         uiMidiActivity();
         lastStateMs = millis();
     }
     else if (!strcmp(t, "toast")) {
-        uiToast(d["msg"] | "");
+        if (screen == SCREEN_HOME) uiToast(d["msg"] | "");
         wakeBacklight();
     }
 }
@@ -168,18 +281,164 @@ static void fireButton(int btn) {
     }
 }
 
-static void pollTouch() {
+// Jumps directly to any screen from any other - what used to be four
+// separate enter/exitXScreen() functions, back when the only way between
+// screens was a swipe to an adjacent one. Resets every screen's "key
+// currently held" flag so a gesture that was mid-flight on the screen you
+// left can never leak onto the one you land on.
+static void gotoScreen(Screen target) {
+    if (target == screen) return;
+    screen = target;
+    dialKeyHeld = false;
+    loopKeyHeld = false;
+    clrPressActive = false;
+    quantKeyHeld = false;
+
+    switch (target) {
+        case SCREEN_HOME:
+            uiBegin(&tft);
+            uiRender(state, true);
+            break;
+        case SCREEN_DIAL:
+            dialPage = 0;
+            dialBank = state.bank < 0 ? 0 : state.bank;
+            dialProgBuf[0] = '\0';
+            uiDialBegin();
+            uiDialRender(dialBank, dialProgBuf, dialPage, state, true);
+            break;
+        case SCREEN_LOOP:
+            uiLoopBegin();
+            uiLoopRender(state, true);
+            break;
+        case SCREEN_QUANTIZE:
+            uiQuantBegin();
+            uiQuantRender(state, true);
+            break;
+    }
+    uiNavRender((int)target);
+}
+
+static void fireDialKey(int key) {
+    if (key >= 0 && key <= 9) {
+        size_t len = strlen(dialProgBuf);
+        if (len < 3) {
+            dialProgBuf[len] = char('0' + key);
+            dialProgBuf[len + 1] = '\0';
+        }
+        uiDialRender(dialBank, dialProgBuf, dialPage, state, false);
+    } else if (key == DIAL_CLR) {
+        size_t len = strlen(dialProgBuf);
+        if (len > 0) dialProgBuf[len - 1] = '\0';
+        uiDialRender(dialBank, dialProgBuf, dialPage, state, false);
+    } else if (key == DIAL_GO) {
+        int prog = dialProgBuf[0] ? atoi(dialProgBuf) : 0;
+        sendPatchSelectCmd(dialBank, prog);
+        gotoScreen(SCREEN_HOME);
+    } else if (key == DIAL_BANK_PAGE) {
+        int pageCount = (state.bankCount + DIAL_BANK_ROWS_VISIBLE - 1) / DIAL_BANK_ROWS_VISIBLE;
+        if (pageCount < 1) pageCount = 1;
+        dialPage = (dialPage + 1) % pageCount;
+        uiDialRender(dialBank, dialProgBuf, dialPage, state, true);
+    } else if (key >= DIAL_BANK_ROW0 && key < DIAL_BANK_ROW0 + DIAL_BANK_ROWS_VISIBLE) {
+        int row = key - DIAL_BANK_ROW0;
+        int idx = dialPage * DIAL_BANK_ROWS_VISIBLE + row;
+        if (idx < state.bankCount) {
+            dialBank = state.banks[idx];
+            uiDialRender(dialBank, dialProgBuf, dialPage, state, true);
+        }
+    }
+}
+
+// AUTO -> 1 -> 2 -> 4 -> 8 -> AUTO, based on whatever the panel is
+// currently showing (which reflects bridge.py's actual setting).
+static void fireLoopBarsCycle() {
+    static const char *ORDER[5] = { "auto", "1", "2", "4", "8" };
+    int idx = 0;
+    for (int i = 0; i < 5; i++) {
+        if (!strcmp(state.bars, ORDER[i])) { idx = i; break; }
+    }
+    sendBarsCmd(ORDER[(idx + 1) % 5]);
+}
+
+static void fireLoopKey(int key) {
+    switch (key) {
+        case LOOP_RECORD: sendCmd("loop_record"); break;
+        case LOOP_PLAY:   sendCmd("loop_play");   break;
+        case LOOP_UNDO:   sendCmd("loop_undo");   break;
+        case LOOP_REDO:   sendCmd("loop_redo");   break;
+        case LOOP_CLEAR:  sendCmd("loop_clear");  break;   // long-press only
+        case LOOP_METRO:  sendCmd("metronome_toggle"); break;
+        case LOOP_BARS:   fireLoopBarsCycle(); break;
+        default: break;
+    }
+    // Stay on this screen either way - unlike the dial screen's GO, these
+    // are controls you keep using (record, then play, then maybe clear),
+    // not a one-shot action. The next state frame reflects the new state.
+}
+
+static void fireQuantKey(int key) {
+    // Matches QuantKey's values and QUANT_OPTS's order in ui.cpp.
+    static const char *WIRE[7] = { "off", "1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t" };
+    if (key < 0 || key > 6) return;
+    sendQuantizeCmd(WIRE[key]);
+    // Stay on screen - same reasoning as fireLoopKey, this is a setting you
+    // might change more than once, not a one-shot action.
+}
+
+static void pollTouchHome() {
     int sx, sy;
     bool down = readTouch(sx, sy);
     uint32_t now = millis();
 
     if (down) {
+        // Once a drag has started on the slider, keep tracking it by X
+        // position alone until the finger actually lifts. Re-classifying the
+        // zone every frame let ordinary vertical drift (or a one-frame touch
+        // dropout) during a drag land above the strip and fire PANIC
+        // mid-gesture, which also repaints this exact screen area - so a
+        // stray drift looked like the slider silently resetting.
+        if (heldBtn == BTN_VOLUME) {
+            wakeBacklight();
+            int pct = uiSliderPercentFromX(sx);
+            if (pct != state.vol) {
+                state.vol = pct;
+                uiRender(state, false);
+            }
+            if (now - lastVolSendMs >= VOLUME_SEND_THROTTLE_MS) {
+                lastVolSendMs = now;
+                sendVolumeCmd(pct);
+            }
+            return;
+        }
+
+        if (heldBtn == BTN_NONE) {
+            int navTarget = uiNavHitTest(sx, sy);
+            if (navTarget >= 0) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                lastFireMs = now;
+                wakeBacklight();
+                gotoScreen((Screen)navTarget);
+                return;
+            }
+        }
+
         int btn = uiHitTest(sx, sy);
 
         if (calMode && heldBtn == BTN_NONE) {
-            static const char *NAMES[] = { "BANK-", "PREV", "NEXT", "BANK+", "PANIC" };
+            static const char *NAMES[] = { "BANK-", "PREV", "NEXT", "BANK+", "PANIC", "VOLUME" };
             Serial.printf("#   -> zone %d (%s)\n", btn,
-                          (btn >= 0 && btn <= 4) ? NAMES[btn] : "none");
+                          (btn >= 0 && btn <= 5) ? NAMES[btn] : "none");
+        }
+
+        if (btn == BTN_VOLUME) {
+            wakeBacklight();
+            heldBtn = BTN_VOLUME;
+            int pct = uiSliderPercentFromX(sx);
+            state.vol = pct;
+            uiRender(state, false);
+            lastVolSendMs = now;
+            sendVolumeCmd(pct);
+            return;
         }
 
         if (heldBtn == BTN_NONE && btn != BTN_NONE) {
@@ -199,9 +458,150 @@ static void pollTouch() {
                 fireButton(heldBtn);
             }
         }
-    } else if (heldBtn != BTN_NONE) {
-        if (heldBtn <= 3) uiPress(heldBtn, false);
-        heldBtn = BTN_NONE;
+    } else {
+        if (heldBtn != BTN_NONE) {
+            if (heldBtn == BTN_VOLUME) {
+                // Commit the final value even if the last drag frame was
+                // skipped by the send throttle.
+                sendVolumeCmd(state.vol);
+            } else if (heldBtn <= 3) {
+                uiPress(heldBtn, false);
+            }
+            heldBtn = BTN_NONE;
+        }
+    }
+}
+
+static void pollTouchDial() {
+    int sx, sy;
+    bool down = readTouch(sx, sy);
+    uint32_t now = millis();
+
+    if (down) {
+        if (!dialKeyHeld) {
+            int navTarget = uiNavHitTest(sx, sy);
+            if (navTarget >= 0) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                lastFireMs = now;
+                wakeBacklight();
+                gotoScreen((Screen)navTarget);
+                return;
+            }
+
+            int key = uiDialHitTest(sx, sy);
+            if (key != DIAL_NONE) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                dialKeyHeld = true;
+                lastFireMs = now;
+                wakeBacklight();
+                fireDialKey(key);
+            }
+        }
+    } else {
+        dialKeyHeld = false;
+    }
+}
+
+static void pollTouchLoop() {
+    int sx, sy;
+    bool down = readTouch(sx, sy);
+    uint32_t now = millis();
+
+    if (down) {
+        // UNDO/REDO long-press tracking runs independently of loopKeyHeld,
+        // since (unlike every other key on this screen) it needs to keep
+        // sampling every frame while the finger stays down, to catch the
+        // moment it crosses the hold threshold rather than waiting for
+        // release.
+        if (clrPressActive) {
+            if (!clrLongFired && now - clrPressStartMs >= LOOP_CLR_HOLD_MS) {
+                clrLongFired = true;
+                wakeBacklight();
+                fireLoopKey(LOOP_CLEAR);
+            }
+            return;
+        }
+
+        if (!loopKeyHeld) {
+            int navTarget = uiNavHitTest(sx, sy);
+            if (navTarget >= 0) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                lastFireMs = now;
+                wakeBacklight();
+                gotoScreen((Screen)navTarget);
+                return;
+            }
+
+            int key = uiLoopHitTest(sx, sy);
+            if (key == LOOP_UNDO || key == LOOP_REDO) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                wakeBacklight();
+                clrPressActive = true;
+                clrPressIsRedo = (key == LOOP_REDO);
+                clrPressStartMs = now;
+                clrLongFired = false;
+                return;   // fires on release (short tap) or hold-threshold (clear)
+            }
+            if (key != LOOP_NONE) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                loopKeyHeld = true;
+                lastFireMs = now;
+                wakeBacklight();
+                fireLoopKey(key);
+            }
+        }
+    } else {
+        loopKeyHeld = false;
+        if (clrPressActive) {
+            if (!clrLongFired) {
+                // Released before the hold threshold - a short tap.
+                lastFireMs = now;
+                fireLoopKey(clrPressIsRedo ? LOOP_REDO : LOOP_UNDO);
+            }
+            clrPressActive = false;
+        }
+    }
+}
+
+static void pollTouchQuantize() {
+    int sx, sy;
+    bool down = readTouch(sx, sy);
+    uint32_t now = millis();
+
+    if (down) {
+        if (!quantKeyHeld) {
+            int navTarget = uiNavHitTest(sx, sy);
+            if (navTarget >= 0) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                lastFireMs = now;
+                wakeBacklight();
+                gotoScreen((Screen)navTarget);
+                return;
+            }
+
+            int key = uiQuantHitTest(sx, sy);
+            if (key != QUANT_NONE) {
+                if (now - lastFireMs < TOUCH_DEBOUNCE_MS) return;
+                quantKeyHeld = true;
+                lastFireMs = now;
+                wakeBacklight();
+                fireQuantKey(key);
+            }
+        }
+    } else {
+        quantKeyHeld = false;
+    }
+}
+
+static void pollTouch() {
+    if (screen == SCREEN_DIAL) {
+        pollTouchDial();
+    } else if (screen == SCREEN_LOOP) {
+        pollTouchLoop();
+    } else if (screen == SCREEN_QUANTIZE) {
+        pollTouchQuantize();
+    } else {
+        pollTouchHome();
     }
 }
 
@@ -224,6 +624,7 @@ void setup() {
     uiBegin(&tft);
     strncpy(state.name, "waiting for pi", sizeof(state.name) - 1);
     uiRender(state, true);
+    uiNavRender((int)SCREEN_HOME);
 
     lastTouchMs = millis();
     sendHello();
@@ -238,7 +639,7 @@ void loop() {
     // Link watchdog - no frames from the bridge means it died or was unplugged.
     if (state.linked && now - lastStateMs > LINK_TIMEOUT_MS) {
         state.linked = false;
-        uiRender(state, false);
+        if (screen == SCREEN_HOME) uiRender(state, false);
     }
     if (!state.linked && now - lastHelloMs > HELLO_RETRY_MS) {
         sendHello();
@@ -252,6 +653,9 @@ void loop() {
     }
 #endif
 
-    uiTick(state);
+    // uiTick's toast-expiry path force-repaints the home screen's content
+    // area - skip it entirely while another screen owns that space, or a
+    // PANIC toast that outlives a screen switch would corrupt the display.
+    if (screen == SCREEN_HOME) uiTick(state);
     delay(5);
 }

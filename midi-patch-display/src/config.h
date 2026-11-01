@@ -38,6 +38,16 @@
 #define TOUCH_DEBOUNCE_MS   180
 #define TOUCH_REPEAT_MS     420   // hold a bank/patch button to auto-repeat
 
+// Loop screen's UNDO/REDO split button: a short tap fires undo or redo
+// (whichever half), but holding it this long fires a full, immediate clear
+// instead - deliberately longer than TOUCH_REPEAT_MS so it reads as a
+// distinct gesture, not just "held a bit long".
+#define LOOP_CLR_HOLD_MS    650
+
+// Volume slider drags fire continuously while a finger moves, but we only
+// want to write to serial this often so a fast swipe doesn't flood the link.
+#define VOLUME_SEND_THROTTLE_MS  100
+
 // ---------------------------------------------------------------------------
 // Link + power
 // ---------------------------------------------------------------------------

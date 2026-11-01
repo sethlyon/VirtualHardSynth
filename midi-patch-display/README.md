@@ -15,18 +15,22 @@ MIDI keyboard --USB/DIN--> Pi 4 --> FluidSynth --> audio HAT --> speakers
 
 ```
 +----------------------------------------------+
-| FluidR3_GM                     * MIDI  [87%] |
+| FluidR3_GM        [PANIC]      * MIDI  [87%] |
 +----------------------------------------------+
 |                                              |
 |                Rhodes MkI                    |
 |                                              |
 |          BANK 000      PROG 004              |
 |                                              |
-|      tap here for panic / all notes off      |
+|   VOL  [======================........]     |
 +-----------+-----------+----------+-----------+
 |   BANK-   |   PREV    |   NEXT   |   BANK+   |
 +-----------+-----------+----------+-----------+
 ```
+
+Panic used to be "tap almost anywhere in the middle of the screen" - moved
+into a small status-bar button because that huge hit-zone was too easy to
+trigger by accident while dragging the volume slider directly below it.
 
 ## Layout
 
@@ -70,18 +74,22 @@ serial link before FluidSynth is in the picture.
 sudo apt install python3-rtmidi        # or let pip build it
 pip install -r pi/requirements.txt
 
-python3 pi/bridge.py --port /dev/ttyUSB0 --midi-in "" --battery none -v
+python3 pi/bridge.py --port /dev/ttyUSB0 --midi-in "Yamaha" --battery ina219 -v
 ```
 
 Useful flags:
 
 | Flag | Purpose |
 |------|---------|
-| `--sf2 PATH` | Soundfont path. Auto-detected when the command socket is up |
-| `--midi-in SUBSTR` | Substring of the keyboard MIDI port, for patch-change sync |
+| `--patches PATH` | Patch table JSON, default `../../synth/patches.json` - see [`synth/`](../synth/) |
+| `--midi-in SUBSTR` | Substring of the keyboard MIDI port, for patch-change sync. Empty (the default) matches whatever's first available. |
 | `--channel N` | MIDI channel to drive, default 0 |
-| `--battery pisugar` | Enable battery reporting |
+| `--battery pisugar\|ina219` | Enable battery reporting |
 | `--fluid-port N` | FluidSynth command socket, default 9800 |
+
+There is no `--sf2` flag any more - which soundfonts exist and what they map
+to is entirely owned by `synth/patches.json` now (edit it directly, or
+through the web UI in `synth/webui.py`).
 
 ### Control paths
 
@@ -94,8 +102,9 @@ fluidsynth -s -a alsa -o audio.alsa.device=hw:0 /usr/share/sounds/sf2/FluidR3_GM
 
 Without it, the bridge falls back to sending Bank Select + Program Change to
 FluidSynth's MIDI input. That works against any running instance with no
-reconfiguration, but it cannot query which soundfonts are loaded, so pass
-`--sf2` explicitly in that case.
+reconfiguration, but it can only drive whichever single soundfont FluidSynth
+was already started with - it can't load additional ones from `patches.json`
+on the fly, since that needs the command socket's `load` command.
 
 ### Stable device name
 
@@ -153,7 +162,7 @@ diagnostics and the bridge ignores them.
 Pi to CYD:
 
 ```json
-{"t":"state","bank":0,"prog":4,"name":"Rhodes MkI","sf":"FluidR3_GM","batt":78,"midi":true}
+{"t":"state","bank":0,"prog":4,"name":"Rhodes MkI","sf":"FluidR3_GM","batt":78,"vol":80,"midi":true}
 {"t":"act"}
 {"t":"toast","msg":"PANIC"}
 ```
@@ -163,9 +172,16 @@ CYD to Pi:
 ```json
 {"t":"hello","fw":"1.0.0"}
 {"t":"cmd","action":"patch_next"}
+{"t":"cmd","action":"volume_set","value":80}
 ```
 
-Actions: `patch_next`, `patch_prev`, `bank_next`, `bank_prev`, `panic`.
+Actions: `patch_next`, `patch_prev`, `bank_next`, `bank_prev`, `panic`,
+`volume_set` (fired continuously while dragging the slider, throttled to
+`VOLUME_SEND_THROTTLE_MS` in `config.h`, plus once more on release to commit
+whatever the throttle skipped).
+
+`vol` (0-100) drives the WM8960 HAT's hardware output level directly, not
+FluidSynth's own gain - see [`synth/`](../synth/) and `HANDOFF.md` for why.
 
 The CYD repeats `hello` every 2s until it receives a `state` frame, so the
 bridge can restart at any time and the screen resyncs on its own. If no frame
